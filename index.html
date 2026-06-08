@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Focal Middle East — Performance Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --blue: #1251a3;
+  --blue-light: #e8f0fb;
+  --blue-mid: #3b6fd4;
+  --dark: #111827;
+  --gray: #6b7280;
+  --gray-light: #f3f4f6;
+  --border: #e5e7eb;
+  --white: #ffffff;
+  --green: #059669;
+  --green-light: #d1fae5;
+  --amber: #d97706;
+  --amber-light: #fef3c7;
+  --red: #dc2626;
+  --red-light: #fee2e2;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: #f0f4f8; color: var(--dark); min-height: 100vh; }
+
+/* HEADER */
+.topbar { background: var(--blue); padding: 0 2rem; display: flex; align-items: center; height: 60px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 8px rgba(18,81,163,0.3); }
+.topbar-logo { display: flex; align-items: center; gap: 12px; }
+.logo-img { background: white; border-radius: 6px; padding: 4px 8px; display: flex; align-items: center; }
+.logo-img svg { width: 48px; height: 24px; }
+.topbar-title { color: white; font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+.topbar-sub { color: rgba(255,255,255,0.6); font-size: 12px; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.btn-admin-nav { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.25); padding: 6px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+.btn-admin-nav:hover { background: rgba(255,255,255,0.25); }
+
+/* LAYOUT */
+.app { max-width: 860px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+/* SCREENS */
+.screen { display: none; }
+.screen.active { display: block; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* BACK NAV */
+.back-nav { display: flex; align-items: center; gap: 6px; color: var(--blue); font-size: 13px; cursor: pointer; margin-bottom: 1.5rem; width: fit-content; padding: 4px 0; }
+.back-nav:hover { opacity: 0.75; }
+.back-nav svg { width: 16px; height: 16px; }
+
+/* CARDS */
+.card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+.card-title { font-size: 13px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 1.25rem; padding-bottom: 10px; border-bottom: 1.5px solid var(--blue-light); display: flex; align-items: center; gap: 8px; }
+.card-title span { background: var(--blue); color: white; width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+
+/* HOME SCREEN */
+.home-hero { background: var(--blue); border-radius: 14px; padding: 2.5rem; margin-bottom: 1.5rem; color: white; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.home-hero h2 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+.home-hero p { font-size: 14px; color: rgba(255,255,255,0.7); }
+.home-hero-badge { background: rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 14px; font-size: 12px; color: white; white-space: nowrap; }
+
+.office-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; }
+.office-tab { padding: 8px 20px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: var(--white); color: var(--gray); transition: all 0.15s; font-family: inherit; }
+.office-tab.active { background: var(--blue); color: white; border-color: var(--blue); }
+.office-tab:hover:not(.active) { border-color: var(--blue); color: var(--blue); }
+
+.dept-section { margin-bottom: 1.25rem; }
+.dept-label { font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; padding: 0 4px; }
+.emp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+.emp-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow); }
+.emp-card:hover { border-color: var(--blue); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.emp-card.submitted { border-color: var(--green); background: #f0fdf4; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--blue-light); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--blue); flex-shrink: 0; }
+.emp-card.submitted .avatar { background: var(--green-light); color: var(--green); }
+.emp-info { flex: 1; min-width: 0; }
+.emp-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.emp-num { font-size: 11px; color: var(--gray); font-family: 'DM Mono', monospace; }
+
+/* BADGES */
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.04em; }
+.badge-done { background: var(--green-light); color: var(--green); }
+.badge-pending { background: var(--amber-light); color: var(--amber); }
+.badge-not-started { background: var(--gray-light); color: var(--gray); }
+.badge-ready { background: var(--blue-light); color: var(--blue); }
+
+/* FORMS */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 12px; font-weight: 500; color: var(--gray); }
+.form-input { font-size: 14px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 7px; background: var(--white); color: var(--dark); font-family: inherit; transition: border-color 0.15s; }
+.form-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(18,81,163,0.08); }
+.form-input[readonly] { background: var(--gray-light); color: var(--gray); }
+textarea.form-input { min-height: 90px; resize: vertical; line-height: 1.6; }
+select.form-input { cursor: pointer; }
+
+/* SECTION TABLE ROWS */
+.table-section { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table-section th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1.5px solid var(--border); background: var(--gray-light); }
+.table-section td { padding: 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.table-section td input, .table-section td textarea { width: 100%; font-size: 13px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; font-family: inherit; color: var(--dark); background: white; }
+.table-section td textarea { min-height: 60px; resize: vertical; }
+.table-section td input:focus, .table-section td textarea:focus { outline: none; border-color: var(--blue); }
+
+/* COMPETENCY TABLE */
+.comp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.comp-table th { padding: 8px 12px; background: var(--blue); color: white; font-size: 11px; font-weight: 600; text-align: center; letter-spacing: 0.04em; }
+.comp-table th:first-child { text-align: left; border-radius: 6px 0 0 0; }
+.comp-table th:last-child { border-radius: 0 6px 0 0; }
+.comp-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: center; }
+.comp-table td:first-child { text-align: left; font-weight: 400; }
+.comp-table tr:last-child td { border-bottom: none; }
+.comp-table tr:hover td { background: var(--blue-light); }
+.comp-table input[type=radio] { width: 16px; height: 16px; cursor: pointer; accent-color: var(--blue); }
+.comp-score-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; font-family: 'DM Mono', monospace; }
+.score-na { background: var(--gray-light); color: var(--gray); }
+.score-1 { background: var(--red-light); color: var(--red); }
+.score-2 { background: var(--amber-light); color: var(--amber); }
+.score-3 { background: var(--blue-light); color: var(--blue); }
+.score-4 { background: var(--green-light); color: var(--green); }
+
+/* 9-BOX */
+.nine-box-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 10px; }
+.nine-box-cell { border: 1.5px solid var(--border); border-radius: 8px; padding: 12px; cursor: pointer; text-align: center; transition: all 0.15s; }
+.nine-box-cell:hover { border-color: var(--blue); }
+.nine-box-cell.selected { border-color: var(--blue); background: var(--blue-light); }
+.nine-box-cell .nb-label { font-size: 13px; font-weight: 600; color: var(--dark); }
+.nine-box-cell.selected .nb-label { color: var(--blue); }
+.nine-box-cell .nb-sub { font-size: 11px; color: var(--gray); margin-top: 3px; }
+
+/* BUTTONS */
+.btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; }
+.btn { padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: var(--blue); color: white; }
+.btn-primary:hover { background: #0f3f85; }
+.btn-secondary { background: var(--white); color: var(--dark); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--gray-light); }
+.btn-danger { background: var(--red-light); color: var(--red); }
+.btn-danger:hover { background: #fecaca; }
+.btn-success { background: var(--green); color: white; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+
+/* SUCCESS */
+.success-screen { text-align: center; padding: 3rem 1rem; }
+.success-icon { width: 64px; height: 64px; background: var(--green-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; }
+.success-icon svg { width: 32px; height: 32px; color: var(--green); }
+.success-screen h2 { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+.success-screen p { color: var(--gray); font-size: 14px; max-width: 400px; margin: 0 auto 2rem; }
+
+/* PASSWORD SCREEN */
+.pw-card { max-width: 380px; margin: 4rem auto; }
+.pw-card .pw-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.pw-card .pw-sub { font-size: 13px; color: var(--gray); margin-bottom: 1.5rem; }
+.error-msg { font-size: 13px; color: var(--red); background: var(--red-light); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; display: none; }
+
+/* ADMIN DASHBOARD */
+.admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.stat-card { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow); }
+.stat-num { font-size: 28px; font-weight: 600; font-family: 'DM Mono', monospace; color: var(--blue); }
+.stat-label { font-size: 12px; color: var(--gray); margin-top: 2px; }
+
+.admin-tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; border-bottom: 1.5px solid var(--border); padding-bottom: 0; }
+.admin-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; font-family: inherit; color: var(--gray); border-bottom: 2.5px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+.admin-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+.admin-tab:hover:not(.active) { color: var(--dark); }
+
+.admin-panel { display: none; }
+.admin-panel.active { display: block; }
+
+/* REVIEWS TABLE */
+.reviews-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.reviews-table th { padding: 10px 12px; background: var(--gray-light); font-size: 11px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.05em; text-align: left; border-bottom: 1px solid var(--border); }
+.reviews-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.reviews-table tr:hover td { background: #fafbff; }
+.reviews-table a { color: var(--blue); cursor: pointer; font-weight: 500; font-size: 12px; }
+.reviews-table a:hover { text-decoration: underline; }
+
+/* MANAGE SECTION */
+.manage-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 1rem; flex-wrap: wrap; }
+.manage-list { background: var(--white); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.manage-item { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 10px; font-size: 13px; }
+.manage-item:last-child { border-bottom: none; }
+.manage-item-info { flex: 1; }
+.manage-item-name { font-weight: 500; }
+.manage-item-sub { font-size: 11px; color: var(--gray); margin-top: 1px; }
+.manage-actions { display: flex; gap: 6px; }
+
+/* DETAIL MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: flex-start; justify-content: center; padding: 1rem; overflow-y: auto; z-index: 200; }
+.modal-box { background: var(--white); border-radius: 14px; padding: 2rem; width: 100%; max-width: 720px; margin: 2rem auto; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; }
+.modal-title { font-size: 18px; font-weight: 600; }
+.modal-sub { font-size: 13px; color: var(--gray); margin-top: 2px; }
+.detail-section { margin-bottom: 1.5rem; }
+.detail-section-title { font-size: 11px; font-weight: 600; color: var(--blue); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--blue-light); }
+.detail-row { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.detail-row:last-child { border-bottom: none; }
+.detail-key { color: var(--gray); min-width: 180px; flex-shrink: 0; }
+.detail-val { color: var(--dark); flex: 1; }
+
+/* PROGRESS BAR */
+.form-progress { height: 3px; background: var(--border); border-radius: 3px; margin-bottom: 1.5rem; overflow: hidden; }
+.form-progress-fill { height: 100%; background: var(--blue); border-radius: 3px; transition: width 0.4s ease; }
+
+/* LOADING */
+.loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 3rem; color: var(--gray); font-size: 14px; }
+.spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* TOAST */
+.toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--dark); color: white; padding: 12px 18px; border-radius: 8px; font-size: 13px; box-shadow: var(--shadow-md); z-index: 500; animation: slideUp 0.3s ease; }
+.toast.error { background: var(--red); }
+.toast.success { background: var(--green); }
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@media (max-width: 600px) {
+  .topbar { padding: 0 1rem; }
+  .home-hero { flex-direction: column; }
+  .comp-table { font-size: 11px; }
+  .comp-table th, .comp-table td { padding: 6px 6px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-img">
+      <svg viewBox="0 0 60 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="60" height="30" fill="#1251a3"/>
+        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="'DM Sans', sans-serif" font-weight="700" font-size="14">Focal</text>
+      </svg>
+    </div>
+    <div>
+      <div class="topbar-title">Performance Review</div>
+      <div class="topbar-sub">Focal Middle East</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <button class="btn-admin-nav" onclick="showScreen('screen-admin-login')">Reviewer / Admin →</button>
+  </div>
+</div>
+
+<div class="app">
+
+  <!-- HOME -->
+  <div id="screen-home" class="screen active">
+    <div class="home-hero">
+      <div>
+        <h2>Performance Development Review</h2>
+        <p>Select your name below to fill out your self-evaluation form</p>
+      </div>
+      <div class="home-hero-badge">📅 Annual Review 2025–26</div>
+    </div>
+    <div class="card">
+      <div class="office-tabs" id="office-tabs">
+        <button class="office-tab active" onclick="selectOffice('Dubai', this)">🇦🇪 Dubai</button>
+        <button class="office-tab" onclick="selectOffice('India', this)">🇮🇳 India</button>
+        <button class="office-tab" onclick="selectOffice('Sri Lanka', this)">🇱🇰 Sri Lanka</button>
+      </div>
+      <div id="employee-list"><div class="loading"><div class="spinner"></div> Loading employees...</div></div>
+    </div>
+  </div>
+
+  <!-- EMPLOYEE FORM -->
+  <div id="screen-employee-form" class="screen">
+    <div class="back-nav" onclick="showScreen('screen-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back to home
+    </div>
+    <div class="form-progress"><div class="form-progress-fill" id="emp-progress" style="width:20%"></div></div>
+    <div id="emp-form-body"></div>
+  </div>
+
+  <!-- ADMIN LOGIN -->
+  <div id="screen-admin-login" class="screen">
+    <div class="back-nav" onclick="showScreen('screen-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </div>
+    <div class="card pw-card">
+      <div class="pw-title">🔒 Reviewer & Admin Login</div>
+      <div class="pw-sub">Enter the password to access reviewer and admin features.</div>
+      <div class="error-msg" id="admin-err">Incorrect password. Please try again.</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" id="admin-pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkAdminPw()"/>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="checkAdminPw()">Login</button>
+    </div>
+  </div>
+
+  <!-- ADMIN DASHBOARD -->
+  <div id="screen-admin" class="screen">
+    <div class="back-nav" onclick="showScreen('screen-home')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back to home
+    </div>
+    <div class="admin-stats" id="admin-stats"></div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchAdminTab('reviews', this)">All Reviews</button>
+      <button class="admin-tab" onclick="switchAdminTab('employees', this)">Manage Employees</button>
+      <button class="admin-tab" onclick="switchAdminTab('departments', this)">Manage Departments</button>
+    </div>
+
+    <div id="panel-reviews" class="admin-panel active">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+          <div style="font-weight:500;font-size:14px">All Submissions</div>
+          <select class="form-input" style="width:auto;font-size:13px;padding:6px 10px" id="review-office-filter" onchange="renderReviewsTable()">
+            <option value="">All offices</option>
+            <option>Dubai</option><option>India</option><option>Sri Lanka</option>
+          </select>
+        </div>
+        <div style="overflow-x:auto"><table class="reviews-table" id="reviews-table"></table></div>
+      </div>
+    </div>
+
+    <div id="panel-employees" class="admin-panel">
+      <div class="card">
+        <div class="card-title">Add employee</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Full name</label>
+            <input class="form-input" id="add-emp-name" placeholder="Employee name"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Office</label>
+            <select class="form-input" id="add-emp-office" onchange="updateDeptDropdown()">
+              <option>Dubai</option><option>India</option><option>Sri Lanka</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department</label>
+            <select class="form-input" id="add-emp-dept"><option value="">— No department —</option></select>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addEmployee()">+ Add employee</button>
+      </div>
+      <div id="emp-manage-list"></div>
+    </div>
+
+    <div id="panel-departments" class="admin-panel">
+      <div class="card">
+        <div class="card-title">Add department</div>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr auto;align-items:flex-end">
+          <div class="form-group">
+            <label class="form-label">Department name</label>
+            <input class="form-input" id="add-dept-name" placeholder="e.g. BIM"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Office</label>
+            <select class="form-input" id="add-dept-office">
+              <option>Dubai</option><option>India</option><option>Sri Lanka</option>
+            </select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="addDepartment()" style="margin-bottom:0">+ Add</button>
+        </div>
+      </div>
+      <div id="dept-manage-list"></div>
+    </div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div id="screen-success" class="screen">
+    <div class="success-screen">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h2 id="success-title">Submitted!</h2>
+      <p id="success-msg">Your form has been recorded successfully.</p>
+      <button class="btn btn-primary" onclick="showScreen('screen-home');loadEmployees()">Back to home</button>
+    </div>
+  </div>
+
+</div><!-- end .app -->
+
+<!-- DETAIL MODAL -->
+<div id="detail-modal" style="display:none" class="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div><div class="modal-title" id="modal-title"></div><div class="modal-sub" id="modal-sub"></div></div>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://sbddjyjjcphgremwwydu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZGRqeWpqY3BoZ3JlbXd3eWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4ODg2NTIsImV4cCI6MjA5NjQ2NDY1Mn0.zcYjRpKUCy1xOMnsQBcVgi_EKTeND5qYoy7mkV5tMAQ';
+const ADMIN_PASSWORD = 'Focalreview@123';
+const COMPETENCIES = ['Job Knowledge','Quality of work','Software skills','Planning, budgeting & forecasting','Quality assurance in work','Meeting deadlines / commitments','Delegation skills','Communication skills','Initiative & Innovation','Problem-solving & decision-making','Team-working & collaboration','Adaptability & Learning','Integrity & Work Ethics'];
+const NINE_BOX = [
+  {key:'Star',sub:'High potential, high performance'},
+  {key:'High Potential',sub:'High potential, moderate performance'},
+  {key:'Solid Potential',sub:'High potential, low performance'},
+  {key:'High Performance',sub:'Moderate potential, high performance'},
+  {key:'Core Player',sub:'Moderate potential, moderate performance'},
+  {key:'Average Performer',sub:'Inconsistent performer'},
+  {key:'Performance Gem',sub:'High performance, stable potential'},
+  {key:'Inconsistent Player',sub:'Low potential, moderate performance'},
+  {key:'Underachiever',sub:'Underperformer'},
+];
+
+let currentOffice = 'Dubai';
+let currentEmployee = null;
+let currentReview = null;
+let allEmployees = [];
+let allDepartments = [];
+let allReviews = [];
+let selectedNineBox = null;
+
+// SUPABASE HELPERS
+async function sb(table, method='GET', body=null, query='') {
+  const opts = { method, headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer '+SUPABASE_KEY, 'Content-Type': 'application/json', 'Prefer': method==='POST'?'return=representation':'', } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, opts);
+  if (!res.ok) { const e = await res.json(); throw new Error(e.message||'Supabase error'); }
+  if (res.status === 204) return null;
+  return res.json();
+}
+async function sbGet(table, query='') { return sb(table, 'GET', null, query); }
+async function sbPost(table, body) { return sb(table, 'POST', body); }
+async function sbPatch(table, query, body) { return sb(table, 'PATCH', body, query); }
+async function sbDelete(table, query) { return sb(table, 'DELETE', null, query); }
+
+// UTILS
+function initials(name) { return name.split(' ').filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join(''); }
+function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+function toast(msg, type='') { const t=document.createElement('div'); t.className='toast '+(type?'toast '+type:''); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
+function closeModal() { document.getElementById('detail-modal').style.display='none'; }
+
+// LOAD DATA
+async function loadAll() { 
+  try {
+    const [emps, depts, revs] = await Promise.all([
+      sbGet('employees','?select=*,departments(id,name)&active=eq.true&order=emp_number'),
+      sbGet('departments','?order=name'),
+      sbGet('reviews','?select=*,employees(name,office)')
+    ]);
+    allEmployees = emps || [];
+    allDepartments = depts || [];
+    allReviews = revs || [];
+  } catch(e) { toast('Failed to load data: '+e.message,'error'); }
+}
+
+async function loadEmployees() {
+  await loadAll();
+  renderEmployeeList();
+}
+
+function renderEmployeeList() {
+  const office = currentOffice;
+  const emps = allEmployees.filter(e=>e.office===office);
+  const depts = allDepartments.filter(d=>d.office===office);
+  const el = document.getElementById('employee-list');
+  if (!emps.length) { el.innerHTML = '<div style="padding:2rem;color:var(--gray);font-size:14px;text-align:center">No employees found for this office.</div>'; return; }
+
+  // Group by department
+  const noDept = emps.filter(e=>!e.department_id);
+  let html = '';
+
+  if (depts.length > 0) {
+    depts.forEach(dept => {
+      const dEmps = emps.filter(e=>e.department_id===dept.id);
+      if (!dEmps.length) return;
+      html += `<div class="dept-section"><div class="dept-label">${dept.name}</div><div class="emp-grid">${dEmps.map(empCard).join('')}</div></div>`;
+    });
+    if (noDept.length) html += `<div class="dept-section"><div class="dept-label">Unassigned</div><div class="emp-grid">${noDept.map(empCard).join('')}</div></div>`;
+  } else {
+    html += `<div class="emp-grid">${emps.map(empCard).join('')}</div>`;
+  }
+  el.innerHTML = html;
+}
+
+function empCard(e) {
+  const rev = allReviews.find(r=>r.employee_id===e.id);
+  const submitted = rev && rev.employee_submitted;
+  return `<div class="emp-card${submitted?' submitted':''}" onclick="startEmployeeForm('${e.id}')">
+    <div class="avatar">${initials(e.name)}</div>
+    <div class="emp-info">
+      <div class="emp-name">${e.name}</div>
+      <div class="emp-num">#${String(e.emp_number||'').padStart(2,'0')} ${submitted?'<span class="badge badge-done">Done</span>':''}</div>
+    </div>
+  </div>`;
+}
+
+function selectOffice(office, btn) {
+  currentOffice = office;
+  document.querySelectorAll('.office-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderEmployeeList();
+}
+
+// EMPLOYEE FORM
+async function startEmployeeForm(empId) {
+  currentEmployee = allEmployees.find(e=>e.id===empId);
+  if (!currentEmployee) return;
+  currentReview = allReviews.find(r=>r.employee_id===empId) || null;
+  if (currentReview && currentReview.employee_submitted) {
+    toast('You have already submitted your form. Contact admin if changes are needed.','');
+    return;
+  }
+  renderEmployeeForm();
+  showScreen('screen-employee-form');
+}
+
+function renderEmployeeForm() {
+  const e = currentEmployee;
+  const r = currentReview || {};
+  document.getElementById('emp-progress').style.width='15%';
+  document.getElementById('emp-form-body').innerHTML = `
+  <div class="card">
+    <div class="card-title">Employee details</div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Full name</label><input class="form-input" value="${e.name}" readonly/></div>
+      <div class="form-group"><label class="form-label">Employee ID</label><input class="form-input" id="ef-empid" value="${r.emp_id_code||''}" placeholder="e.g. FCL-001"/></div>
+      <div class="form-group"><label class="form-label">Job title</label><input class="form-input" id="ef-title" value="${r.job_title||''}" placeholder="Your job title"/></div>
+      <div class="form-group"><label class="form-label">Department</label><input class="form-input" value="${e.departments?e.departments.name:''}" readonly/></div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Office / Location</label><input class="form-input" value="${e.office}" readonly/></div>
+      <div class="form-group"><label class="form-label">Date of joining</label><input class="form-input" id="ef-doj" type="date" value="${r.date_of_joining||''}"/></div>
+      <div class="form-group"><label class="form-label">Reviewer name</label><input class="form-input" id="ef-reviewer" value="${r.reviewer_name||''}" placeholder="Your reviewer's name"/></div>
+      <div class="form-group"><label class="form-label">Date of review</label><input class="form-input" id="ef-dor" type="date" value="${r.date_of_review||new Date().toISOString().split('T')[0]}"/></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>1</span> Employee self evaluation</div>
+    ${[
+      ['ef-q0','A. Outline what you perceive as your main duties and responsibilities.',r.q_duties],
+      ['ef-q1','B. What areas of your work do you feel you perform well in?',r.q_perform_well],
+      ['ef-q2','C. Describe the aspects of your responsibilities that you perceive as the most challenging.',r.q_challenging],
+      ['ef-q3','D. In what ways have you improved efficiency, demonstrated problem solving, and adapted to evolving work priorities?',r.q_efficiency],
+      ['ef-q4','E. In your opinion, how effectively does FOCAL acknowledge the value you bring to your role?',r.q_acknowledgement],
+    ].map(([id,q,val])=>`<div class="form-group" style="margin-bottom:14px"><label class="form-label">${q}</label><textarea class="form-input" id="${id}" placeholder="Write your answer here...">${val||''}</textarea></div>`).join('')}
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>2</span> Past achievements & learnings</div>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Overview of key achievements and performance over the past year</p>
+    <table class="table-section"><thead><tr><th style="width:48%">Key achievement / objective</th><th>Feedback on performance and areas for growth</th></tr></thead><tbody>
+    ${[0,1,2,3,4].map(i=>{
+      const ach = r.achievements && r.achievements[i] ? r.achievements[i] : {};
+      return `<tr><td><textarea id="ef-ach${i}" placeholder="Achievement ${i+1}...">${ach.objective||''}</textarea></td><td><textarea id="ef-fb${i}" placeholder="Feedback...">${ach.feedback||''}</textarea></td></tr>`;
+    }).join('')}
+    </tbody></table>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>3</span> Next milestones & key focus areas</div>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Establish performance targets for the coming 12 months</p>
+    <table class="table-section"><thead><tr><th style="width:40%">Objective / Goal</th><th style="width:20%">Timeline</th><th>Success criteria</th></tr></thead><tbody>
+    ${[0,1,2].map(i=>{
+      const m = r.milestones && r.milestones[i] ? r.milestones[i] : {};
+      return `<tr><td><input id="ef-goal${i}" value="${m.goal||''}" placeholder="Goal ${i+1}..."/></td><td><input id="ef-tl${i}" value="${m.timeline||''}" placeholder="e.g. Q3 2026"/></td><td><input id="ef-sc${i}" value="${m.criteria||''}" placeholder="Success criteria..."/></td></tr>`;
+    }).join('')}
+    </tbody></table>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>4</span> Personal development plan</div>
+    <table class="table-section"><thead><tr><th>Development need & outcome</th><th>Area</th><th>Action required (by whom)</th><th style="width:120px">Target date</th></tr></thead><tbody>
+    ${[0,1,2].map(i=>{
+      const d = r.development_plan && r.development_plan[i] ? r.development_plan[i] : {};
+      return `<tr><td><textarea id="ef-dn${i}" style="min-height:50px" placeholder="Need...">${d.need||''}</textarea></td><td><input id="ef-da${i}" value="${d.area||''}" placeholder="e.g. Technical"/></td><td><input id="ef-dac${i}" value="${d.action||''}" placeholder="Action & by whom..."/></td><td><input type="date" id="ef-dd${i}" value="${d.date||''}"/></td></tr>`;
+    }).join('')}
+    </tbody></table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Employee comments</div>
+    <div class="form-group"><textarea class="form-input" id="ef-empcomments" placeholder="Any additional comments...">${r.employee_comments||''}</textarea></div>
+  </div>
+
+  <div class="card" style="background:var(--blue-light);border-color:var(--blue)">
+    <div style="display:flex;align-items:flex-start;gap:12px">
+      <input type="checkbox" id="ef-declaration" style="width:18px;height:18px;margin-top:3px;accent-color:var(--blue);flex-shrink:0"/>
+      <label for="ef-declaration" style="font-size:13px;cursor:pointer;line-height:1.6">By submitting this form, I confirm that all information provided is accurate and complete to the best of my knowledge. I understand this will be reviewed by my assigned reviewer.</label>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="showScreen('screen-home')">Cancel</button>
+    <button class="btn btn-primary" onclick="submitEmployeeForm()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+      Submit form
+    </button>
+  </div>`;
+}
+
+async function submitEmployeeForm() {
+  if (!document.getElementById('ef-declaration').checked) { toast('Please confirm the declaration before submitting.','error'); return; }
+  const achievements = [0,1,2,3,4].map(i=>({objective:document.getElementById('ef-ach'+i).value,feedback:document.getElementById('ef-fb'+i).value}));
+  const milestones = [0,1,2].map(i=>({goal:document.getElementById('ef-goal'+i).value,timeline:document.getElementById('ef-tl'+i).value,criteria:document.getElementById('ef-sc'+i).value}));
+  const development_plan = [0,1,2].map(i=>({need:document.getElementById('ef-dn'+i).value,area:document.getElementById('ef-da'+i).value,action:document.getElementById('ef-dac'+i).value,date:document.getElementById('ef-dd'+i).value}));
+  const payload = {
+    employee_id: currentEmployee.id,
+    emp_id_code: document.getElementById('ef-empid').value,
+    job_title: document.getElementById('ef-title').value,
+    date_of_joining: document.getElementById('ef-doj').value || null,
+    reviewer_name: document.getElementById('ef-reviewer').value,
+    date_of_review: document.getElementById('ef-dor').value || null,
+    q_duties: document.getElementById('ef-q0').value,
+    q_perform_well: document.getElementById('ef-q1').value,
+    q_challenging: document.getElementById('ef-q2').value,
+    q_efficiency: document.getElementById('ef-q3').value,
+    q_acknowledgement: document.getElementById('ef-q4').value,
+    achievements, milestones, development_plan,
+    employee_comments: document.getElementById('ef-empcomments').value,
+    employee_submitted: true,
+    employee_submitted_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  try {
+    if (currentReview) {
+      await sbPatch('reviews','?id=eq.'+currentReview.id, payload);
+    } else {
+      await sbPost('reviews', payload);
+    }
+    document.getElementById('success-title').textContent = 'Form submitted!';
+    document.getElementById('success-msg').textContent = `Thank you, ${currentEmployee.name}. Your self-evaluation has been saved. Your reviewer will be notified to complete their section.`;
+    showScreen('screen-success');
+  } catch(e) { toast('Error saving form: '+e.message,'error'); }
+}
+
+// ADMIN
+function checkAdminPw() {
+  const pw = document.getElementById('admin-pw-input').value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById('admin-err').style.display='none';
+    document.getElementById('admin-pw-input').value='';
+    loadAdminDashboard();
+    showScreen('screen-admin');
+  } else {
+    document.getElementById('admin-err').style.display='block';
+  }
+}
+
+async function loadAdminDashboard() {
+  await loadAll();
+  renderAdminStats();
+  renderReviewsTable();
+  renderEmpManageList();
+  renderDeptManageList();
+  updateDeptDropdown();
+}
+
+function renderAdminStats() {
+  const total = allEmployees.length;
+  const empDone = allReviews.filter(r=>r.employee_submitted).length;
+  const revDone = allReviews.filter(r=>r.reviewer_submitted).length;
+  document.getElementById('admin-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-label">Total employees</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--amber)">${total-empDone}</div><div class="stat-label">Pending self-eval</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--green)">${empDone}</div><div class="stat-label">Self-eval done</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:var(--blue)">${revDone}</div><div class="stat-label">Reviews complete</div></div>`;
+}
+
+function renderReviewsTable() {
+  const filter = document.getElementById('review-office-filter').value;
+  let emps = filter ? allEmployees.filter(e=>e.office===filter) : allEmployees;
+  const table = document.getElementById('reviews-table');
+  table.innerHTML = `<thead><tr><th>#</th><th>Employee</th><th>Office</th><th>Department</th><th>Employee form</th><th>Reviewer form</th><th>9-box</th><th></th></tr></thead><tbody>${
+    emps.map(e=>{
+      const rev = allReviews.find(r=>r.employee_id===e.id);
+      const ed = rev && rev.employee_submitted;
+      const rd = rev && rev.reviewer_submitted;
+      const nb = rd ? rev.nine_box_rating||'—' : '—';
+      const dept = allDepartments.find(d=>d.id===e.department_id);
+      return `<tr>
+        <td style="font-family:'DM Mono',monospace;color:var(--gray)">${String(e.emp_number||'').padStart(2,'0')}</td>
+        <td style="font-weight:500">${e.name}</td>
+        <td>${e.office}</td>
+        <td>${dept?dept.name:'—'}</td>
+        <td><span class="badge ${ed?'badge-done':'badge-not-started'}">${ed?'✓ Done':'Pending'}</span></td>
+        <td><span class="badge ${rd?'badge-done':ed?'badge-pending':'badge-not-started'}">${rd?'✓ Done':ed?'Awaiting':'Pending'}</span></td>
+        <td style="font-size:12px">${nb}</td>
+        <td style="white-space:nowrap">
+          ${rev?`<a onclick="viewReviewDetail('${e.id}')">View</a> · `:''}
+          <a onclick="startReviewerForm('${e.id}')" style="color:${!ed?'var(--gray)':'var(--blue)'}">Review</a>
+        </td>
+      </tr>`;
+    }).join('')
+  }</tbody>`;
+}
+
+// REVIEWER FORM
+async function startReviewerForm(empId) {
+  currentEmployee = allEmployees.find(e=>e.id===empId);
+  currentReview = allReviews.find(r=>r.employee_id===empId) || null;
+  if (!currentReview || !currentReview.employee_submitted) { toast('Employee has not yet submitted their form.',''); return; }
+  selectedNineBox = currentReview.nine_box_rating || null;
+  renderReviewerForm();
+  showScreen('screen-employee-form');
+}
+
+function renderReviewerForm() {
+  const e = currentEmployee;
+  const r = currentReview || {};
+  document.getElementById('emp-progress').style.width='60%';
+  document.getElementById('emp-form-body').innerHTML = `
+  <div class="card" style="background:var(--blue);color:white">
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;opacity:0.7;text-transform:uppercase;margin-bottom:4px">Reviewer section</div>
+    <div style="font-size:18px;font-weight:600">${e.name}</div>
+    <div style="font-size:13px;opacity:0.75">${e.office} ${r.job_title?'· '+r.job_title:''}</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>5</span> Competency insights</div>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:14px">Rate the employee based on the demands of their present role. N/A = Not applicable, 1 = Needs improvement, 2 = Developing, 3 = Proficient, 4 = Excellent</p>
+    <div style="overflow-x:auto">
+    <table class="comp-table">
+      <thead><tr><th>Core Competency</th><th>N/A</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
+      <tbody>
+      ${COMPETENCIES.map((comp,i)=>{
+        const saved = r.competency_ratings && r.competency_ratings[comp] ? r.competency_ratings[comp] : '';
+        return `<tr><td>${comp}</td>${['na','1','2','3','4'].map(v=>`<td><input type="radio" name="comp${i}" value="${v}" ${saved===v?'checked':''}/></td>`).join('')}</tr>`;
+      }).join('')}
+      </tbody>
+    </table>
+    </div>
+    <div class="form-group" style="margin-top:1rem"><label class="form-label">Overall competency comments (optional)</label><textarea class="form-input" id="rv-compcomments" placeholder="Any comments on competencies...">${r.competency_comments||''}</textarea></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>6</span> Reviewer comments</div>
+    <div class="form-group"><label class="form-label">Comments on overall performance</label><textarea class="form-input" id="rv-comments" placeholder="Your comments on this employee's overall performance...">${r.reviewer_comments||''}</textarea></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>7</span> Final performance potential matrix — 9 box</div>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Select the category that best represents this employee's performance and potential</p>
+    <div class="nine-box-grid" id="nine-box-grid">
+      ${NINE_BOX.map(o=>`<div class="nine-box-cell${selectedNineBox===o.key?' selected':''}" onclick="selectNB('${o.key}',this)">
+        <div class="nb-label">${o.key}</div>
+        <div class="nb-sub">${o.sub}</div>
+      </div>`).join('')}
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-secondary" onclick="loadAdminDashboard();showScreen('screen-admin')">Cancel</button>
+    <button class="btn btn-primary" onclick="submitReviewerForm()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+      Submit review
+    </button>
+  </div>`;
+}
+
+function selectNB(key, el) {
+  selectedNineBox = key;
+  document.querySelectorAll('.nine-box-cell').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function submitReviewerForm() {
+  const ratings = {};
+  COMPETENCIES.forEach((comp,i)=>{
+    const sel = document.querySelector(`input[name="comp${i}"]:checked`);
+    ratings[comp] = sel ? sel.value : '';
+  });
+  const payload = {
+    competency_ratings: ratings,
+    competency_comments: document.getElementById('rv-compcomments').value,
+    reviewer_comments: document.getElementById('rv-comments').value,
+    nine_box_rating: selectedNineBox,
+    reviewer_submitted: true,
+    reviewer_submitted_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  try {
+    await sbPatch('reviews','?id=eq.'+currentReview.id, payload);
+    document.getElementById('success-title').textContent = 'Review submitted!';
+    document.getElementById('success-msg').textContent = `Review for ${currentEmployee.name} has been saved and is now visible in the HR dashboard.`;
+    showScreen('screen-success');
+  } catch(e) { toast('Error saving review: '+e.message,'error'); }
+}
+
+// VIEW DETAIL
+function viewReviewDetail(empId) {
+  const emp = allEmployees.find(e=>e.id===empId);
+  const rev = allReviews.find(r=>r.employee_id===empId);
+  if (!emp || !rev) return;
+  document.getElementById('modal-title').textContent = emp.name;
+  document.getElementById('modal-sub').textContent = `${emp.office} · Review ${rev.review_year||'2026'}`;
+  const dept = allDepartments.find(d=>d.id===emp.department_id);
+  let html = '';
+  if (rev.employee_submitted) {
+    html += `<div class="detail-section">
+      <div class="detail-section-title">Employee details</div>
+      ${[['Employee ID',rev.emp_id_code],['Job title',rev.job_title],['Department',dept?dept.name:'—'],['Date of joining',rev.date_of_joining],['Reviewer',rev.reviewer_name],['Date of review',rev.date_of_review]].map(([k,v])=>v?`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`:'').join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Self evaluation</div>
+      ${[['Main duties',rev.q_duties],['Performs well in',rev.q_perform_well],['Most challenging',rev.q_challenging],['Efficiency & problem solving',rev.q_efficiency],['FOCAL acknowledgement',rev.q_acknowledgement]].map(([k,v])=>v?`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`:'').join('')}
+    </div>`;
+    if (rev.achievements && rev.achievements.some(a=>a.objective)) {
+      html += `<div class="detail-section"><div class="detail-section-title">Key achievements</div>${rev.achievements.filter(a=>a.objective).map((a,i)=>`<div class="detail-row"><span class="detail-key">Achievement ${i+1}</span><span class="detail-val">${a.objective}${a.feedback?'<br><span style="color:var(--gray);font-size:12px">Feedback: '+a.feedback+'</span>':''}</span></div>`).join('')}</div>`;
+    }
+  }
+  if (rev.reviewer_submitted) {
+    html += `<div class="detail-section">
+      <div class="detail-section-title">Competency ratings</div>
+      ${COMPETENCIES.map(comp=>{
+        const val = rev.competency_ratings && rev.competency_ratings[comp];
+        const labels = {na:'N/A',1:'1 – Needs improvement',2:'2 – Developing',3:'3 – Proficient',4:'4 – Excellent'};
+        const cls = {na:'score-na',1:'score-1',2:'score-2',3:'score-3',4:'score-4'};
+        return val?`<div class="detail-row"><span class="detail-key">${comp}</span><span class="detail-val"><span class="comp-score-badge ${cls[val]||''}">${labels[val]||val}</span></span></div>`:'';
+      }).join('')}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Reviewer assessment</div>
+      ${rev.reviewer_comments?`<div class="detail-row"><span class="detail-key">Reviewer comments</span><span class="detail-val">${rev.reviewer_comments}</span></div>`:''}
+      ${rev.nine_box_rating?`<div class="detail-row"><span class="detail-key">9-box rating</span><span class="detail-val"><strong>${rev.nine_box_rating}</strong><br><span style="font-size:12px;color:var(--gray)">${(NINE_BOX.find(n=>n.key===rev.nine_box_rating)||{}).sub||''}</span></span></div>`:''}
+    </div>`;
+  }
+  document.getElementById('modal-body').innerHTML = html || '<p style="color:var(--gray);font-size:14px">No data submitted yet.</p>';
+  document.getElementById('detail-modal').style.display='flex';
+}
+
+// MANAGE EMPLOYEES
+function renderEmpManageList() {
+  const el = document.getElementById('emp-manage-list');
+  const offices = ['Dubai','India','Sri Lanka'];
+  el.innerHTML = offices.map(office=>{
+    const emps = allEmployees.filter(e=>e.office===office);
+    if (!emps.length) return '';
+    return `<div class="card"><div class="card-title">${office} <span style="background:var(--gray-light);color:var(--gray);font-size:11px;padding:2px 8px;border-radius:20px;margin-left:4px">${emps.length}</span></div>
+      <div class="manage-list">${emps.map(e=>{
+        const dept = allDepartments.find(d=>d.id===e.department_id);
+        const officeDepts = allDepartments.filter(d=>d.office===e.office);
+        return `<div class="manage-item">
+          <div class="avatar" style="width:30px;height:30px;font-size:11px">${initials(e.name)}</div>
+          <div class="manage-item-info">
+            <div class="manage-item-name">${e.name}</div>
+            <div class="manage-item-sub">#${String(e.emp_number||'').padStart(2,'0')}</div>
+          </div>
+          <select style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;color:var(--dark);background:white;font-family:inherit" onchange="changeEmpDept('${e.id}',this.value)">
+            <option value="">No dept</option>
+            ${officeDepts.map(d=>`<option value="${d.id}" ${e.department_id===d.id?'selected':''}>${d.name}</option>`).join('')}
+          </select>
+          <button class="btn btn-danger btn-sm" onclick="removeEmployee('${e.id}','${e.name}')">Remove</button>
+        </div>`;
+      }).join('')}</div></div>`;
+  }).join('');
+}
+
+async function addEmployee() {
+  const name = document.getElementById('add-emp-name').value.trim();
+  const office = document.getElementById('add-emp-office').value;
+  const dept = document.getElementById('add-emp-dept').value;
+  if (!name) { toast('Please enter a name','error'); return; }
+  const maxNum = allEmployees.filter(e=>e.office===office).reduce((m,e)=>Math.max(m,e.emp_number||0),0);
+  try {
+    await sbPost('employees',{name, office, department_id: dept||null, emp_number: maxNum+1, active:true});
+    toast('Employee added!','success');
+    document.getElementById('add-emp-name').value='';
+    await loadAdminDashboard();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+async function removeEmployee(id, name) {
+  if (!confirm(`Remove ${name}? This cannot be undone.`)) return;
+  try {
+    await sbPatch('employees','?id=eq.'+id,{active:false});
+    toast('Employee removed','');
+    await loadAdminDashboard();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+async function changeEmpDept(empId, deptId) {
+  try {
+    await sbPatch('employees','?id=eq.'+empId,{department_id: deptId||null});
+    toast('Department updated','success');
+    await loadAll();
+    renderEmpManageList();
+    renderReviewsTable();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+// MANAGE DEPARTMENTS
+function renderDeptManageList() {
+  const el = document.getElementById('dept-manage-list');
+  const offices = ['Dubai','India','Sri Lanka'];
+  el.innerHTML = offices.map(office=>{
+    const depts = allDepartments.filter(d=>d.office===office);
+    if (!depts.length) return `<div class="card"><div class="card-title">${office}</div><p style="font-size:13px;color:var(--gray)">No departments yet.</p></div>`;
+    return `<div class="card"><div class="card-title">${office}</div>
+      <div class="manage-list">${depts.map(d=>{
+        const count = allEmployees.filter(e=>e.department_id===d.id).length;
+        return `<div class="manage-item">
+          <div class="manage-item-info"><div class="manage-item-name">${d.name}</div><div class="manage-item-sub">${count} employee${count!==1?'s':''}</div></div>
+          <button class="btn btn-danger btn-sm" onclick="removeDept('${d.id}','${d.name}')">Remove</button>
+        </div>`;
+      }).join('')}</div></div>`;
+  }).join('');
+}
+
+async function addDepartment() {
+  const name = document.getElementById('add-dept-name').value.trim();
+  const office = document.getElementById('add-dept-office').value;
+  if (!name) { toast('Please enter a department name','error'); return; }
+  try {
+    await sbPost('departments',{name, office});
+    toast('Department added!','success');
+    document.getElementById('add-dept-name').value='';
+    await loadAdminDashboard();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+async function removeDept(id, name) {
+  if (!confirm(`Remove "${name}"? Employees in this department will be unassigned.`)) return;
+  try {
+    await sbDelete('departments','?id=eq.'+id);
+    toast('Department removed','');
+    await loadAdminDashboard();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+function updateDeptDropdown() {
+  const office = document.getElementById('add-emp-office').value;
+  const depts = allDepartments.filter(d=>d.office===office);
+  document.getElementById('add-emp-dept').innerHTML = '<option value="">— No department —</option>' + depts.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+}
+
+function switchAdminTab(tab, btn) {
+  document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+// INIT
+loadEmployees();
+</script>
+</body>
+</html>
