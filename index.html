@@ -585,6 +585,17 @@ function renderEmployeeForm() {
     <div class="form-group"><textarea class="form-input" id="ef-empcomments" placeholder="Any additional comments...">${r.employee_comments||''}</textarea></div>
   </div>
 
+  <div class="card">
+    <div class="card-title">Employee signature</div>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Please sign below using your mouse or finger (on touch screens)</p>
+    <canvas id="emp-sig-canvas" width="700" height="160" style="border:1.5px solid var(--border);border-radius:8px;cursor:crosshair;touch-action:none;width:100%;background:white;display:block"></canvas>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-secondary btn-sm" onclick="clearSig('emp-sig-canvas')">Clear signature</button>
+      <span style="font-size:12px;color:var(--gray);align-self:center" id="emp-sig-status">${r.employee_signature?'✓ Signature already saved — draw again to update':'Draw your signature above'}</span>
+    </div>
+    ${r.employee_signature?`<div style="margin-top:10px"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Current saved signature:</p><img src="${r.employee_signature}" style="border:1px solid var(--border);border-radius:6px;max-height:80px;background:white"/></div>`:''}
+  </div>
+
   <div class="card" style="background:var(--blue-light);border-color:var(--blue)">
     <div style="display:flex;align-items:flex-start;gap:12px">
       <input type="checkbox" id="ef-declaration" style="width:18px;height:18px;margin-top:3px;accent-color:var(--blue);flex-shrink:0"/>
@@ -599,6 +610,53 @@ function renderEmployeeForm() {
       Submit form
     </button>
   </div>`;
+  setTimeout(()=>initSigPad('emp-sig-canvas'), 50);
+}
+
+// SIGNATURE PAD
+function initSigPad(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 160;
+  ctx.strokeStyle = '#111827';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  let drawing = false, lastX = 0, lastY = 0;
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return [(src.clientX - r.left) * (canvas.width / r.width), (src.clientY - r.top) * (canvas.height / r.height)];
+  }
+  function start(e) { e.preventDefault(); drawing = true; [lastX, lastY] = getPos(e); }
+  function draw(e) {
+    if (!drawing) return; e.preventDefault();
+    const [x, y] = getPos(e);
+    ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke();
+    [lastX, lastY] = [x, y];
+  }
+  function stop() { drawing = false; }
+  canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stop); canvas.addEventListener('mouseleave', stop);
+  canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', draw, {passive:false});
+  canvas.addEventListener('touchend', stop);
+}
+
+function clearSig(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function getSigData(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const ctx = canvas.getContext('2d');
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const hasDrawing = Array.from(pixels).some((v, i) => i % 4 === 3 && v > 0);
+  return hasDrawing ? canvas.toDataURL('image/png') : null;
 }
 
 async function submitEmployeeForm() {
@@ -606,6 +664,7 @@ async function submitEmployeeForm() {
   const achievements = [0,1,2,3,4].map(i=>({objective:document.getElementById('ef-ach'+i).value,feedback:document.getElementById('ef-fb'+i).value}));
   const milestones = [0,1,2].map(i=>({goal:document.getElementById('ef-goal'+i).value,timeline:document.getElementById('ef-tl'+i).value,criteria:document.getElementById('ef-sc'+i).value}));
   const development_plan = [0,1,2].map(i=>({need:document.getElementById('ef-dn'+i).value,area:document.getElementById('ef-da'+i).value,action:document.getElementById('ef-dac'+i).value,date:document.getElementById('ef-dd'+i).value}));
+  const sigData = getSigData('emp-sig-canvas');
   const payload = {
     employee_id: currentEmployee.id,
     emp_id_code: document.getElementById('ef-empid').value,
@@ -624,6 +683,8 @@ async function submitEmployeeForm() {
     employee_submitted_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
+  if (sigData) payload.employee_signature = sigData;
+  else if (currentReview && currentReview.employee_signature) payload.employee_signature = currentReview.employee_signature;
   try {
     if (currentReview) {
       await sbPatch('reviews','?id=eq.'+currentReview.id, payload);
@@ -763,6 +824,17 @@ function renderReviewerForm() {
     </div>
   </div>
 
+  <div class="card">
+    <div class="card-title">Reviewer signature</div>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Please sign below using your mouse or finger (on touch screens)</p>
+    <canvas id="rev-sig-canvas" width="700" height="160" style="border:1.5px solid var(--border);border-radius:8px;cursor:crosshair;touch-action:none;width:100%;background:white;display:block"></canvas>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-secondary btn-sm" onclick="clearSig('rev-sig-canvas')">Clear signature</button>
+      <span style="font-size:12px;color:var(--gray);align-self:center" id="rev-sig-status">${r.reviewer_signature?'✓ Signature already saved — draw again to update':'Draw your signature above'}</span>
+    </div>
+    ${r.reviewer_signature?`<div style="margin-top:10px"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Current saved signature:</p><img src="${r.reviewer_signature}" style="border:1px solid var(--border);border-radius:6px;max-height:80px;background:white"/></div>`:''}
+  </div>
+
   <div class="btn-row">
     <button class="btn btn-secondary" onclick="loadAdminDashboard();showScreen('screen-admin')">Cancel</button>
     <button class="btn btn-primary" onclick="submitReviewerForm()">
@@ -770,6 +842,7 @@ function renderReviewerForm() {
       Submit review
     </button>
   </div>`;
+  setTimeout(()=>initSigPad('rev-sig-canvas'), 50);
 }
 
 function selectNB(key, el) {
@@ -784,6 +857,7 @@ async function submitReviewerForm() {
     const sel = document.querySelector(`input[name="comp${i}"]:checked`);
     ratings[comp] = sel ? sel.value : '';
   });
+  const sigData = getSigData('rev-sig-canvas');
   const payload = {
     competency_ratings: ratings,
     competency_comments: document.getElementById('rv-compcomments').value,
@@ -793,6 +867,8 @@ async function submitReviewerForm() {
     reviewer_submitted_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
+  if (sigData) payload.reviewer_signature = sigData;
+  else if (currentReview && currentReview.reviewer_signature) payload.reviewer_signature = currentReview.reviewer_signature;
   try {
     await sbPatch('reviews','?id=eq.'+currentReview.id, payload);
     document.getElementById('success-title').textContent = 'Review submitted!';
@@ -990,8 +1066,14 @@ function downloadPDF() {
   <div class="nine-sub">${(NINE_BOX.find(n=>n.key===rev.nine_box_rating)||{}).sub||''}</div>`:''}
 
   <div class="sig-line" style="margin-top:50px">
-    <div class="sig-block">Sign of Employee<br><br><span style="color:#888">${emp.name}</span></div>
-    <div class="sig-block">Sign of Reviewer<br><br><span style="color:#888">${rev.reviewer_name||'_____________'}</span></div>
+    <div class="sig-block">
+      ${rev.employee_signature?`<img src="${rev.employee_signature}" style="height:60px;display:block;margin-bottom:6px"/>`:'<div style="height:60px"></div>'}
+      <div style="border-top:1px solid #111;padding-top:8px;font-size:12px">Sign of Employee<br><span style="color:#888">${emp.name}</span></div>
+    </div>
+    <div class="sig-block">
+      ${rev.reviewer_signature?`<img src="${rev.reviewer_signature}" style="height:60px;display:block;margin-bottom:6px"/>`:'<div style="height:60px"></div>'}
+      <div style="border-top:1px solid #111;padding-top:8px;font-size:12px">Sign of Reviewer<br><span style="color:#888">${rev.reviewer_name||'_____________'}</span></div>
+    </div>
   </div>
   `:''}
 
