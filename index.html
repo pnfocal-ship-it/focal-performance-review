@@ -688,13 +688,25 @@ function renderReviewsTable() {
         <td><span class="badge ${ed?'badge-done':'badge-not-started'}">${ed?'✓ Done':'Pending'}</span></td>
         <td><span class="badge ${rd?'badge-done':ed?'badge-pending':'badge-not-started'}">${rd?'✓ Done':ed?'Awaiting':'Pending'}</span></td>
         <td style="font-size:12px">${nb}</td>
-        <td style="white-space:nowrap">
-          ${rev?`<a onclick="viewReviewDetail('${e.id}')">View</a> · `:''}
+        <td style="white-space:nowrap;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          ${rev?`<a onclick="viewReviewDetail('${e.id}')">View</a> ·`:''}
           <a onclick="startReviewerForm('${e.id}')" style="color:${!ed?'var(--gray)':'var(--blue)'}">Review</a>
+          ${rev?`· <a onclick="resetReview('${e.id}','${e.name}')" style="color:var(--red)">Reset</a>`:''}
         </td>
       </tr>`;
     }).join('')
   }</tbody>`;
+}
+
+async function resetReview(empId, empName) {
+  if (!confirm(`Reset the form for ${empName}?\n\nThis will permanently delete their submitted data so they can fill the form again from scratch.`)) return;
+  const rev = allReviews.find(r=>r.employee_id===empId);
+  if (!rev) return;
+  try {
+    await sbDelete('reviews','?id=eq.'+rev.id);
+    toast(`Form reset for ${empName}. They can now resubmit.`,'success');
+    await loadAdminDashboard();
+  } catch(e) { toast('Error resetting form: '+e.message,'error'); }
 }
 
 // REVIEWER FORM
