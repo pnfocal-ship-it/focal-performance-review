@@ -384,7 +384,13 @@ select.form-input { cursor: pointer; }
   <div class="modal-box">
     <div class="modal-header">
       <div><div class="modal-title" id="modal-title"></div><div class="modal-sub" id="modal-sub"></div></div>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-secondary btn-sm" onclick="downloadPDF()" id="btn-download-pdf" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          Download PDF
+        </button>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
+      </div>
     </div>
     <div id="modal-body"></div>
   </div>
@@ -433,7 +439,7 @@ async function sbDelete(table, query) { return sb(table, 'DELETE', null, query);
 function initials(name) { return name.split(' ').filter(Boolean).map(w=>w[0].toUpperCase()).slice(0,2).join(''); }
 function showScreen(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
 function toast(msg, type='') { const t=document.createElement('div'); t.className='toast '+(type?'toast '+type:''); t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000); }
-function closeModal() { document.getElementById('detail-modal').style.display='none'; }
+function closeModal() { document.getElementById('detail-modal').style.display='none'; document.getElementById('btn-download-pdf').style.display='none'; }
 
 // LOAD DATA
 async function loadAll() { 
@@ -545,10 +551,10 @@ function renderEmployeeForm() {
   <div class="card">
     <div class="card-title"><span>2</span> Past achievements & learnings</div>
     <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Overview of key achievements and performance over the past year</p>
-    <table class="table-section"><thead><tr><th style="width:48%">Key achievement / objective</th><th>Feedback on performance and areas for growth</th></tr></thead><tbody>
+    <table class="table-section"><thead><tr><th style="width:50%">Key achievement / objective</th><th>Areas for growth / notes</th></tr></thead><tbody>
     ${[0,1,2,3,4].map(i=>{
       const ach = r.achievements && r.achievements[i] ? r.achievements[i] : {};
-      return `<tr><td><textarea id="ef-ach${i}" placeholder="Achievement ${i+1}...">${ach.objective||''}</textarea></td><td><textarea id="ef-fb${i}" placeholder="Feedback...">${ach.feedback||''}</textarea></td></tr>`;
+      return `<tr><td><textarea id="ef-ach${i}" placeholder="Achievement ${i+1}...">${ach.objective||''}</textarea></td><td><textarea id="ef-fb${i}" placeholder="Notes on this achievement...">${ach.feedback||''}</textarea></td></tr>`;
     }).join('')}
     </tbody></table>
   </div>
@@ -784,45 +790,206 @@ async function submitReviewerForm() {
 }
 
 // VIEW DETAIL
+let currentViewEmpId = null;
 function viewReviewDetail(empId) {
+  currentViewEmpId = empId;
   const emp = allEmployees.find(e=>e.id===empId);
   const rev = allReviews.find(r=>r.employee_id===empId);
   if (!emp || !rev) return;
   document.getElementById('modal-title').textContent = emp.name;
   document.getElementById('modal-sub').textContent = `${emp.office} · Review ${rev.review_year||'2026'}`;
+  document.getElementById('btn-download-pdf').style.display = 'inline-flex';
   const dept = allDepartments.find(d=>d.id===emp.department_id);
+  const labels = {na:'N/A',1:'1 – Needs improvement',2:'2 – Developing',3:'3 – Proficient',4:'4 – Excellent'};
+  const cls = {na:'score-na',1:'score-1',2:'score-2',3:'score-3',4:'score-4'};
   let html = '';
+
   if (rev.employee_submitted) {
+    // Employee details
     html += `<div class="detail-section">
       <div class="detail-section-title">Employee details</div>
-      ${[['Employee ID',rev.emp_id_code],['Job title',rev.job_title],['Department',dept?dept.name:'—'],['Date of joining',rev.date_of_joining],['Reviewer',rev.reviewer_name],['Date of review',rev.date_of_review]].map(([k,v])=>v?`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`:'').join('')}
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">Self evaluation</div>
-      ${[['Main duties',rev.q_duties],['Performs well in',rev.q_perform_well],['Most challenging',rev.q_challenging],['Efficiency & problem solving',rev.q_efficiency],['FOCAL acknowledgement',rev.q_acknowledgement]].map(([k,v])=>v?`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`:'').join('')}
+      ${[['Employee name',emp.name],['Employee ID',rev.emp_id_code],['Job title',rev.job_title],['Department',dept?dept.name:'—'],['Office / Location',emp.office],['Date of joining',rev.date_of_joining],['Reviewer name',rev.reviewer_name],['Date of review',rev.date_of_review]].map(([k,v])=>v?`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`:'').join('')}
     </div>`;
-    if (rev.achievements && rev.achievements.some(a=>a.objective)) {
-      html += `<div class="detail-section"><div class="detail-section-title">Key achievements</div>${rev.achievements.filter(a=>a.objective).map((a,i)=>`<div class="detail-row"><span class="detail-key">Achievement ${i+1}</span><span class="detail-val">${a.objective}${a.feedback?'<br><span style="color:var(--gray);font-size:12px">Feedback: '+a.feedback+'</span>':''}</span></div>`).join('')}</div>`;
+
+    // Self evaluation
+    html += `<div class="detail-section">
+      <div class="detail-section-title">Section 1 — Employee self evaluation</div>
+      ${[
+        ['A. Main duties & responsibilities', rev.q_duties],
+        ['B. Areas performing well', rev.q_perform_well],
+        ['C. Most challenging aspects', rev.q_challenging],
+        ['D. Efficiency & problem solving', rev.q_efficiency],
+        ['E. FOCAL acknowledgement', rev.q_acknowledgement],
+      ].map(([k,v])=>v?`<div class="detail-row" style="flex-direction:column;gap:4px"><span class="detail-key" style="font-weight:500">${k}</span><span class="detail-val" style="line-height:1.6;white-space:pre-wrap">${v}</span></div>`:'').join('')}
+    </div>`;
+
+    // Achievements
+    if (rev.achievements && rev.achievements.some(a=>a.objective||a.feedback)) {
+      html += `<div class="detail-section"><div class="detail-section-title">Section 2 — Past achievements & learnings</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Achievement / Objective</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Notes</th></tr></thead>
+          <tbody>${rev.achievements.filter(a=>a.objective||a.feedback).map(a=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5">${a.objective||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;color:var(--gray)">${a.feedback||'—'}</td></tr>`).join('')}</tbody>
+        </table></div>`;
+    }
+
+    // Milestones
+    if (rev.milestones && rev.milestones.some(m=>m.goal)) {
+      html += `<div class="detail-section"><div class="detail-section-title">Section 3 — Next milestones & key focus areas</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border);width:40%">Objective / Goal</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border);width:20%">Timeline</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Success criteria</th></tr></thead>
+          <tbody>${rev.milestones.filter(m=>m.goal).map(m=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${m.goal}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--gray)">${m.timeline||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${m.criteria||'—'}</td></tr>`).join('')}</tbody>
+        </table></div>`;
+    }
+
+    // Development plan
+    if (rev.development_plan && rev.development_plan.some(d=>d.need)) {
+      html += `<div class="detail-section"><div class="detail-section-title">Section 4 — Personal development plan</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Development need</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Area</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Action required</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Target date</th></tr></thead>
+          <tbody>${rev.development_plan.filter(d=>d.need).map(d=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${d.need}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--gray)">${d.area||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${d.action||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--gray)">${d.date||'—'}</td></tr>`).join('')}</tbody>
+        </table></div>`;
+    }
+
+    // Employee comments
+    if (rev.employee_comments) {
+      html += `<div class="detail-section"><div class="detail-section-title">Employee comments</div>
+        <div style="font-size:13px;line-height:1.7;white-space:pre-wrap;padding:10px;background:var(--gray-light);border-radius:6px">${rev.employee_comments}</div></div>`;
     }
   }
+
   if (rev.reviewer_submitted) {
+    // Competency ratings
     html += `<div class="detail-section">
-      <div class="detail-section-title">Competency ratings</div>
-      ${COMPETENCIES.map(comp=>{
-        const val = rev.competency_ratings && rev.competency_ratings[comp];
-        const labels = {na:'N/A',1:'1 – Needs improvement',2:'2 – Developing',3:'3 – Proficient',4:'4 – Excellent'};
-        const cls = {na:'score-na',1:'score-1',2:'score-2',3:'score-3',4:'score-4'};
-        return val?`<div class="detail-row"><span class="detail-key">${comp}</span><span class="detail-val"><span class="comp-score-badge ${cls[val]||''}">${labels[val]||val}</span></span></div>`:'';
-      }).join('')}
-    </div>
-    <div class="detail-section">
-      <div class="detail-section-title">Reviewer assessment</div>
-      ${rev.reviewer_comments?`<div class="detail-row"><span class="detail-key">Reviewer comments</span><span class="detail-val">${rev.reviewer_comments}</span></div>`:''}
-      ${rev.nine_box_rating?`<div class="detail-row"><span class="detail-key">9-box rating</span><span class="detail-val"><strong>${rev.nine_box_rating}</strong><br><span style="font-size:12px;color:var(--gray)">${(NINE_BOX.find(n=>n.key===rev.nine_box_rating)||{}).sub||''}</span></span></div>`:''}
+      <div class="detail-section-title">Section 5 — Competency insights</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr><th style="text-align:left;padding:8px 10px;background:var(--blue);color:white;font-size:11px;font-weight:600;letter-spacing:0.04em">Competency</th><th style="text-align:left;padding:8px 10px;background:var(--blue);color:white;font-size:11px;font-weight:600;letter-spacing:0.04em">Rating</th></tr></thead>
+        <tbody>${COMPETENCIES.map(comp=>{
+          const val = rev.competency_ratings && rev.competency_ratings[comp];
+          return val?`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border)">${comp}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border)"><span class="comp-score-badge ${cls[val]||''}">${labels[val]||val}</span></td></tr>`:'';
+        }).join('')}</tbody>
+      </table>
+      ${rev.competency_comments?`<div style="margin-top:10px;font-size:13px;color:var(--gray);padding:10px;background:var(--gray-light);border-radius:6px;line-height:1.6">${rev.competency_comments}</div>`:''}
+    </div>`;
+
+    // Reviewer comments & 9-box
+    html += `<div class="detail-section">
+      <div class="detail-section-title">Section 6 & 7 — Reviewer assessment</div>
+      ${rev.reviewer_comments?`<div class="detail-row" style="flex-direction:column;gap:4px"><span class="detail-key" style="font-weight:500">Reviewer comments</span><span class="detail-val" style="line-height:1.6;white-space:pre-wrap;padding:10px;background:var(--gray-light);border-radius:6px">${rev.reviewer_comments}</span></div>`:''}
+      ${rev.nine_box_rating?`<div class="detail-row" style="margin-top:10px"><span class="detail-key">9-box rating</span><span class="detail-val"><strong style="font-size:15px">${rev.nine_box_rating}</strong><br><span style="font-size:12px;color:var(--gray)">${(NINE_BOX.find(n=>n.key===rev.nine_box_rating)||{}).sub||''}</span></span></div>`:''}
     </div>`;
   }
+
   document.getElementById('modal-body').innerHTML = html || '<p style="color:var(--gray);font-size:14px">No data submitted yet.</p>';
   document.getElementById('detail-modal').style.display='flex';
+}
+
+function downloadPDF() {
+  const empId = currentViewEmpId;
+  const emp = allEmployees.find(e=>e.id===empId);
+  const rev = allReviews.find(r=>r.employee_id===empId);
+  if (!emp || !rev) return;
+  const dept = allDepartments.find(d=>d.id===emp.department_id);
+  const labels = {na:'N/A','1':'1 – Needs improvement','2':'2 – Developing','3':'3 – Proficient','4':'4 – Excellent'};
+
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
+  <title>Performance Review — ${emp.name}</title>
+  <style>
+    body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;font-size:13px;line-height:1.6;padding:40px;max-width:800px;margin:0 auto}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #1251a3}
+    .logo{background:#1251a3;color:white;font-weight:700;font-size:18px;padding:8px 14px;border-radius:6px;letter-spacing:1px}
+    .header-right{text-align:right;color:#666;font-size:12px}
+    h1{font-size:20px;font-weight:700;color:#1251a3;margin-bottom:4px}
+    h2{font-size:13px;font-weight:700;color:#1251a3;text-transform:uppercase;letter-spacing:0.06em;margin:24px 0 8px;padding-bottom:6px;border-bottom:1.5px solid #e8f0fb}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+    .info-item{padding:8px;background:#f8f9fa;border-radius:4px}
+    .info-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px}
+    .info-val{font-size:13px;color:#111}
+    .q-block{margin-bottom:14px}
+    .q-label{font-weight:600;color:#333;margin-bottom:4px;font-size:12px}
+    .q-val{color:#444;white-space:pre-wrap;padding:8px;background:#f8f9fa;border-radius:4px;min-height:30px}
+    table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px}
+    th{background:#1251a3;color:white;padding:7px 10px;text-align:left;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:0.04em}
+    td{padding:7px 10px;border-bottom:1px solid #e5e7eb;vertical-align:top}
+    tr:nth-child(even) td{background:#f8f9fa}
+    .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+    .score-na{background:#f3f4f6;color:#6b7280}.score-1{background:#fee2e2;color:#dc2626}.score-2{background:#fef3c7;color:#d97706}.score-3{background:#e8f0fb;color:#1251a3}.score-4{background:#d1fae5;color:#059669}
+    .nine-box{display:inline-block;background:#1251a3;color:white;padding:8px 18px;border-radius:6px;font-weight:700;font-size:14px;margin-top:6px}
+    .nine-sub{font-size:12px;color:#666;margin-top:4px}
+    .comment-box{background:#f8f9fa;border-radius:4px;padding:12px;white-space:pre-wrap;color:#444;margin-top:8px}
+    .footer{margin-top:40px;padding-top:16px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;font-size:11px;color:#888}
+    .sig-line{margin-top:40px;display:flex;justify-content:space-between;gap:40px}
+    .sig-block{flex:1;border-top:1px solid #111;padding-top:8px;font-size:12px}
+    @media print{body{padding:20px}}
+  </style></head><body>
+  <div class="header">
+    <div>
+      <div class="logo">Focal</div>
+      <div style="margin-top:8px;font-size:11px;color:#888">Focal Middle East · Office 2804, Level 28, API Trio Towers, Barsha 1, Dubai, UAE</div>
+    </div>
+    <div class="header-right">
+      <div style="font-size:16px;font-weight:700;color:#1251a3">Performance Development Review</div>
+      <div>Review Year: ${rev.review_year||'2026'}</div>
+      <div>Generated: ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</div>
+    </div>
+  </div>
+
+  <h1>${emp.name}</h1>
+  <div class="info-grid">
+    ${[['Employee ID',rev.emp_id_code],['Job title',rev.job_title],['Department',dept?dept.name:'—'],['Office',emp.office],['Date of joining',rev.date_of_joining],['Reviewer',rev.reviewer_name],['Date of review',rev.date_of_review]].map(([k,v])=>v?`<div class="info-item"><div class="info-label">${k}</div><div class="info-val">${v}</div></div>`:'').join('')}
+  </div>
+
+  ${rev.employee_submitted?`
+  <h2>Section 1 — Employee Self Evaluation</h2>
+  ${[['A. Main duties & responsibilities',rev.q_duties],['B. Areas performing well',rev.q_perform_well],['C. Most challenging aspects',rev.q_challenging],['D. Efficiency & problem solving',rev.q_efficiency],['E. FOCAL acknowledgement',rev.q_acknowledgement]].map(([k,v])=>v?`<div class="q-block"><div class="q-label">${k}</div><div class="q-val">${v}</div></div>`:'').join('')}
+
+  ${rev.achievements&&rev.achievements.some(a=>a.objective)?`
+  <h2>Section 2 — Past Achievements & Learnings</h2>
+  <table><thead><tr><th style="width:50%">Achievement / Objective</th><th>Notes</th></tr></thead><tbody>
+  ${rev.achievements.filter(a=>a.objective).map(a=>`<tr><td>${a.objective}</td><td>${a.feedback||'—'}</td></tr>`).join('')}
+  </tbody></table>`:''}
+
+  ${rev.milestones&&rev.milestones.some(m=>m.goal)?`
+  <h2>Section 3 — Next Milestones & Key Focus Areas</h2>
+  <table><thead><tr><th style="width:40%">Objective / Goal</th><th style="width:20%">Timeline</th><th>Success Criteria</th></tr></thead><tbody>
+  ${rev.milestones.filter(m=>m.goal).map(m=>`<tr><td>${m.goal}</td><td>${m.timeline||'—'}</td><td>${m.criteria||'—'}</td></tr>`).join('')}
+  </tbody></table>`:''}
+
+  ${rev.development_plan&&rev.development_plan.some(d=>d.need)?`
+  <h2>Section 4 — Personal Development Plan</h2>
+  <table><thead><tr><th>Development Need</th><th>Area</th><th>Action Required</th><th>Target Date</th></tr></thead><tbody>
+  ${rev.development_plan.filter(d=>d.need).map(d=>`<tr><td>${d.need}</td><td>${d.area||'—'}</td><td>${d.action||'—'}</td><td>${d.date||'—'}</td></tr>`).join('')}
+  </tbody></table>`:''}
+
+  ${rev.employee_comments?`<h2>Employee Comments</h2><div class="comment-box">${rev.employee_comments}</div>`:''}
+  `:''}
+
+  ${rev.reviewer_submitted?`
+  <h2>Section 5 — Competency Insights</h2>
+  <table><thead><tr><th style="width:60%">Core Competency</th><th>Rating</th></tr></thead><tbody>
+  ${COMPETENCIES.map(comp=>{const val=rev.competency_ratings&&rev.competency_ratings[comp];return val?`<tr><td>${comp}</td><td><span class="badge score-${val}">${labels[val]||val}</span></td></tr>`:''}).join('')}
+  </tbody></table>
+  ${rev.competency_comments?`<div class="comment-box" style="margin-bottom:16px">${rev.competency_comments}</div>`:''}
+
+  ${rev.reviewer_comments?`<h2>Section 6 — Reviewer Comments</h2><div class="comment-box">${rev.reviewer_comments}</div>`:''}
+
+  ${rev.nine_box_rating?`<h2>Section 7 — Final Performance Potential (9-box)</h2>
+  <div class="nine-box">${rev.nine_box_rating}</div>
+  <div class="nine-sub">${(NINE_BOX.find(n=>n.key===rev.nine_box_rating)||{}).sub||''}</div>`:''}
+
+  <div class="sig-line" style="margin-top:50px">
+    <div class="sig-block">Sign of Employee<br><br><span style="color:#888">${emp.name}</span></div>
+    <div class="sig-block">Sign of Reviewer<br><br><span style="color:#888">${rev.reviewer_name||'_____________'}</span></div>
+  </div>
+  `:''}
+
+  <div class="footer">
+    <div>Focal Middle East — Performance Development Review</div>
+    <div>Confidential</div>
+  </div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 // MANAGE EMPLOYEES
@@ -834,22 +1001,52 @@ function renderEmpManageList() {
     if (!emps.length) return '';
     return `<div class="card"><div class="card-title">${office} <span style="background:var(--gray-light);color:var(--gray);font-size:11px;padding:2px 8px;border-radius:20px;margin-left:4px">${emps.length}</span></div>
       <div class="manage-list">${emps.map(e=>{
-        const dept = allDepartments.find(d=>d.id===e.department_id);
         const officeDepts = allDepartments.filter(d=>d.office===e.office);
-        return `<div class="manage-item">
+        return `<div class="manage-item" id="emp-row-${e.id}">
           <div class="avatar" style="width:30px;height:30px;font-size:11px">${initials(e.name)}</div>
-          <div class="manage-item-info">
-            <div class="manage-item-name">${e.name}</div>
-            <div class="manage-item-sub">#${String(e.emp_number||'').padStart(2,'0')}</div>
+          <div class="manage-item-info" style="flex:1;min-width:0">
+            <div id="emp-display-${e.id}" style="display:flex;align-items:center;gap:6px">
+              <div class="manage-item-name">${e.name}</div>
+              <div class="manage-item-sub">#${String(e.emp_number||'').padStart(2,'0')}</div>
+            </div>
+            <div id="emp-edit-${e.id}" style="display:none;align-items:center;gap:6px">
+              <input id="emp-name-input-${e.id}" value="${e.name}" style="font-size:13px;padding:4px 8px;border:1px solid var(--blue);border-radius:6px;font-family:inherit;color:var(--dark);width:200px" onkeydown="if(event.key==='Enter')saveEmpName('${e.id}');if(event.key==='Escape')cancelEmpEdit('${e.id}')"/>
+              <button class="btn btn-primary btn-sm" onclick="saveEmpName('${e.id}')">Save</button>
+              <button class="btn btn-secondary btn-sm" onclick="cancelEmpEdit('${e.id}')">Cancel</button>
+            </div>
           </div>
           <select style="font-size:12px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;color:var(--dark);background:white;font-family:inherit" onchange="changeEmpDept('${e.id}',this.value)">
             <option value="">No dept</option>
             ${officeDepts.map(d=>`<option value="${d.id}" ${e.department_id===d.id?'selected':''}>${d.name}</option>`).join('')}
           </select>
+          <button class="btn btn-secondary btn-sm" onclick="startEmpEdit('${e.id}')">Rename</button>
           <button class="btn btn-danger btn-sm" onclick="removeEmployee('${e.id}','${e.name}')">Remove</button>
         </div>`;
       }).join('')}</div></div>`;
   }).join('');
+}
+
+function startEmpEdit(id) {
+  document.getElementById('emp-display-'+id).style.display = 'none';
+  const editEl = document.getElementById('emp-edit-'+id);
+  editEl.style.display = 'flex';
+  document.getElementById('emp-name-input-'+id).focus();
+  document.getElementById('emp-name-input-'+id).select();
+}
+
+function cancelEmpEdit(id) {
+  document.getElementById('emp-display-'+id).style.display = 'flex';
+  document.getElementById('emp-edit-'+id).style.display = 'none';
+}
+
+async function saveEmpName(id) {
+  const newName = document.getElementById('emp-name-input-'+id).value.trim();
+  if (!newName) { toast('Name cannot be empty','error'); return; }
+  try {
+    await sbPatch('employees','?id=eq.'+id,{name: newName});
+    toast('Name updated!','success');
+    await loadAdminDashboard();
+  } catch(e) { toast('Error: '+e.message,'error'); }
 }
 
 async function addEmployee() {
