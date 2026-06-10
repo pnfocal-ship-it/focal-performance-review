@@ -605,13 +605,27 @@ function renderEmployeeForm() {
 
   <div class="card">
     <div class="card-title">Employee signature</div>
-    <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Please sign below using your mouse or finger (on touch screens)</p>
-    <canvas id="emp-sig-canvas" width="700" height="160" style="border:1.5px solid var(--border);border-radius:8px;cursor:crosshair;touch-action:none;width:100%;background:white;display:block"></canvas>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn btn-secondary btn-sm" onclick="clearSig('emp-sig-canvas')">Clear signature</button>
-      <span style="font-size:12px;color:var(--gray);align-self:center" id="emp-sig-status">${r.employee_signature?'✓ Signature already saved — draw again to update':'Draw your signature above'}</span>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button type="button" id="emp-sig-tab-draw" onclick="switchSigTab('emp','draw')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer;border:1.5px solid var(--blue);background:var(--blue);color:white;font-weight:500">✏️ Draw</button>
+      <button type="button" id="emp-sig-tab-upload" onclick="switchSigTab('emp','upload')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--gray)">📎 Upload image</button>
     </div>
-    ${r.employee_signature?`<div style="margin-top:10px"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Current saved signature:</p><img src="${r.employee_signature}" style="border:1px solid var(--border);border-radius:6px;max-height:80px;background:white"/></div>`:''}
+    <div id="emp-sig-draw-area">
+      <p style="font-size:12px;color:var(--gray);margin-bottom:8px">Sign using your mouse or finger</p>
+      <canvas id="emp-sig-canvas" width="700" height="160" style="border:1.5px solid var(--border);border-radius:8px;cursor:crosshair;touch-action:none;width:100%;background:white;display:block"></canvas>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-secondary btn-sm" type="button" onclick="clearSig('emp-sig-canvas')">Clear</button>
+        <span style="font-size:12px;color:var(--gray);align-self:center">${r.employee_signature?'✓ Saved — draw again to update':'Draw your signature above'}</span>
+      </div>
+    </div>
+    <div id="emp-sig-upload-area" style="display:none">
+      <p style="font-size:12px;color:var(--gray);margin-bottom:8px">Upload an image of your signature (PNG, JPG)</p>
+      <input type="file" id="emp-sig-file" accept="image/*" onchange="previewSigUpload('emp')" style="font-size:13px;padding:8px;border:1.5px dashed var(--border);border-radius:8px;width:100%;cursor:pointer"/>
+      <div id="emp-sig-upload-preview" style="margin-top:10px;display:none">
+        <p style="font-size:11px;color:var(--gray);margin-bottom:4px">Preview:</p>
+        <img id="emp-sig-upload-img" style="max-height:80px;border:1px solid var(--border);border-radius:6px;background:white"/>
+      </div>
+    </div>
+    ${r.employee_signature?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Currently saved signature:</p><img src="${r.employee_signature}" style="border:1px solid var(--border);border-radius:6px;max-height:70px;background:white"/></div>`:''}
   </div>
 
   <div class="card" style="background:var(--blue-light);border-color:var(--blue)">
@@ -668,14 +682,6 @@ function clearSig(canvasId) {
   canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 }
 
-function getSigData(canvasId) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return null;
-  const ctx = canvas.getContext('2d');
-  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  const hasDrawing = Array.from(pixels).some((v, i) => i % 4 === 3 && v > 0);
-  return hasDrawing ? canvas.toDataURL('image/png') : null;
-}
 
 async function submitEmployeeForm() {
   if (!document.getElementById('ef-declaration').checked) { toast('Please confirm the declaration before submitting.','error'); return; }
@@ -884,9 +890,12 @@ function renderReviewerForm() {
 
   <div class="card">
     <div class="card-title"><span>7</span> Final performance potential matrix — 9 box</div>
-    <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Select the category that best represents this employee's performance and potential</p>
+    <div id="nine-box-suggestion" style="display:none;margin-bottom:12px;padding:10px 14px;background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;font-size:13px">
+      <span style="font-weight:600;color:var(--blue)">💡 Suggested: </span><span id="nine-box-suggestion-text" style="color:var(--blue)"></span>
+      <span style="color:var(--gray);font-size:12px;margin-left:6px">— based on competency scores and comments. You can override by selecting any option below.</span>
+    </div>
     <div class="nine-box-grid" id="nine-box-grid">
-      ${NINE_BOX.map(o=>`<div class="nine-box-cell${selectedNineBox===o.key?' selected':''}" onclick="selectNB('${o.key}',this)">
+      ${NINE_BOX.map(o=>`<div class="nine-box-cell${selectedNineBox===o.key?' selected':''}" id="nb-cell-${o.key.replace(/\s+/g,'-')}" onclick="selectNB('${o.key}',this)">
         <div class="nb-label">${o.key}</div>
         <div class="nb-sub">${o.sub}</div>
       </div>`).join('')}
@@ -895,13 +904,27 @@ function renderReviewerForm() {
 
   <div class="card">
     <div class="card-title">Reviewer signature</div>
-    <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Please sign below using your mouse or finger (on touch screens)</p>
-    <canvas id="rev-sig-canvas" width="700" height="160" style="border:1.5px solid var(--border);border-radius:8px;cursor:crosshair;touch-action:none;width:100%;background:white;display:block"></canvas>
-    <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn btn-secondary btn-sm" onclick="clearSig('rev-sig-canvas')">Clear signature</button>
-      <span style="font-size:12px;color:var(--gray);align-self:center" id="rev-sig-status">${r.reviewer_signature?'✓ Signature already saved — draw again to update':'Draw your signature above'}</span>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button type="button" id="rev-sig-tab-draw" onclick="switchSigTab('rev','draw')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer;border:1.5px solid var(--blue);background:var(--blue);color:white;font-weight:500">✏️ Draw</button>
+      <button type="button" id="rev-sig-tab-upload" onclick="switchSigTab('rev','upload')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--gray)">📎 Upload image</button>
     </div>
-    ${r.reviewer_signature?`<div style="margin-top:10px"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Current saved signature:</p><img src="${r.reviewer_signature}" style="border:1px solid var(--border);border-radius:6px;max-height:80px;background:white"/></div>`:''}
+    <div id="rev-sig-draw-area">
+      <p style="font-size:12px;color:var(--gray);margin-bottom:8px">Sign using your mouse or finger</p>
+      <canvas id="rev-sig-canvas" width="700" height="160" style="border:1.5px solid var(--border);border-radius:8px;cursor:crosshair;touch-action:none;width:100%;background:white;display:block"></canvas>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-secondary btn-sm" type="button" onclick="clearSig('rev-sig-canvas')">Clear</button>
+        <span style="font-size:12px;color:var(--gray);align-self:center">${r.reviewer_signature?'✓ Saved — draw again to update':'Draw your signature above'}</span>
+      </div>
+    </div>
+    <div id="rev-sig-upload-area" style="display:none">
+      <p style="font-size:12px;color:var(--gray);margin-bottom:8px">Upload an image of your signature (PNG, JPG)</p>
+      <input type="file" id="rev-sig-file" accept="image/*" onchange="previewSigUpload('rev')" style="font-size:13px;padding:8px;border:1.5px dashed var(--border);border-radius:8px;width:100%;cursor:pointer"/>
+      <div id="rev-sig-upload-preview" style="margin-top:10px;display:none">
+        <p style="font-size:11px;color:var(--gray);margin-bottom:4px">Preview:</p>
+        <img id="rev-sig-upload-img" style="max-height:80px;border:1px solid var(--border);border-radius:6px;background:white"/>
+      </div>
+    </div>
+    ${r.reviewer_signature?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Currently saved signature:</p><img src="${r.reviewer_signature}" style="border:1px solid var(--border);border-radius:6px;max-height:70px;background:white"/></div>`:''}
   </div>
 
   <div class="btn-row">
@@ -911,13 +934,148 @@ function renderReviewerForm() {
       Submit review
     </button>
   </div>`;
-  setTimeout(()=>initSigPad('rev-sig-canvas'), 50);
+  setTimeout(()=>{ initSigPad('rev-sig-canvas'); autoSuggestNineBox(); }, 50);
+  // Re-suggest whenever competency radios or comments change
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.addEventListener('change', autoSuggestNineBox));
+  document.getElementById('rv-comments') && document.getElementById('rv-comments').addEventListener('input', autoSuggestNineBox);
 }
 
 function selectNB(key, el) {
   selectedNineBox = key;
-  document.querySelectorAll('.nine-box-cell').forEach(c=>c.classList.remove('selected'));
+  document.querySelectorAll('.nine-box-cell').forEach(c=>{
+    c.classList.remove('selected');
+    c.style.borderStyle = 'solid';
+  });
   el.classList.add('selected');
+  el.style.borderStyle = 'solid';
+}
+
+// AUTO-SUGGEST 9-BOX
+function autoSuggestNineBox() {
+  // Calculate avg competency score
+  const vals = COMPETENCIES.map((comp,i)=>{
+    const sel = document.querySelector(`input[name="comp${i}"]:checked`);
+    return sel && sel.value !== 'na' ? parseFloat(sel.value) : null;
+  }).filter(v=>v!==null);
+  if (!vals.length) return;
+  const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+
+  // Sentiment from comments (simple keyword check)
+  const comments = (document.getElementById('rv-comments')||{value:''}).value.toLowerCase();
+  const positiveWords = ['excellent','outstanding','exceptional','great','strong','impressive','above','exceeds','high','potential','grow','star','talented'];
+  const negativeWords = ['struggle','below','poor','weak','inconsistent','needs','improve','concern','challenge','underperform','low'];
+  const posCount = positiveWords.filter(w=>comments.includes(w)).length;
+  const negCount = negativeWords.filter(w=>comments.includes(w)).length;
+  const sentiment = posCount > negCount ? 'positive' : negCount > posCount ? 'negative' : 'neutral';
+
+  // Determine performance level (High/Medium/Low) from avg score
+  let perfLevel = avg >= 3.2 ? 'High' : avg >= 2.2 ? 'Medium' : 'Low';
+  // Adjust performance slightly based on sentiment
+  if (sentiment === 'positive' && perfLevel === 'Medium') perfLevel = 'High';
+  if (sentiment === 'negative' && perfLevel === 'Medium') perfLevel = 'Low';
+
+  // Determine potential level from comments keywords
+  const highPotWords = ['potential','grow','future','leader','develop','promote','advance','progress','aspire'];
+  const lowPotWords = ['plateau','stagnant','resistant','reluctant','struggle to adapt','no growth'];
+  const highPotCount = highPotWords.filter(w=>comments.includes(w)).length;
+  const lowPotCount = lowPotWords.filter(w=>comments.includes(w)).length;
+  let potLevel = highPotCount > lowPotCount ? 'High' : lowPotCount > 0 ? 'Low' : avg >= 3.0 ? 'High' : avg >= 2.0 ? 'Medium' : 'Low';
+
+  // Map to 9-box
+  const matrix = {
+    'High-High': 'Star',
+    'High-Medium': 'High Potential',
+    'High-Low': 'Solid Potential',
+    'Medium-High': 'High Performance',
+    'Medium-Medium': 'Core Player',
+    'Medium-Low': 'Average Performer',
+    'Low-High': 'Performance Gem',
+    'Low-Medium': 'Inconsistent Player',
+    'Low-Low': 'Underachiever',
+  };
+  const suggested = matrix[`${potLevel}-${perfLevel}`] || 'Core Player';
+
+  // Show suggestion banner
+  const banner = document.getElementById('nine-box-suggestion');
+  const bannerText = document.getElementById('nine-box-suggestion-text');
+  if (banner && bannerText) {
+    banner.style.display = 'block';
+    bannerText.textContent = suggested;
+  }
+
+  // Highlight suggested cell with dashed border (don't override user's selection)
+  document.querySelectorAll('.nine-box-cell').forEach(c=>{
+    const cellKey = c.querySelector('.nb-label').textContent.trim();
+    if (cellKey === suggested && !c.classList.contains('selected')) {
+      c.style.borderStyle = 'dashed';
+      c.style.borderColor = 'var(--blue)';
+      c.style.background = 'rgba(18,81,163,0.04)';
+    } else if (!c.classList.contains('selected')) {
+      c.style.borderStyle = 'solid';
+      c.style.borderColor = 'var(--border)';
+      c.style.background = '';
+    }
+  });
+
+  // Auto-select suggested only if nothing manually chosen yet
+  if (!selectedNineBox) {
+    selectedNineBox = suggested;
+    document.querySelectorAll('.nine-box-cell').forEach(c=>{
+      if (c.querySelector('.nb-label').textContent.trim() === suggested) {
+        c.classList.add('selected');
+        c.style.borderStyle = 'solid';
+      }
+    });
+  }
+}
+
+// SIGNATURE TABS
+function switchSigTab(prefix, tab) {
+  const drawArea = document.getElementById(`${prefix}-sig-draw-area`);
+  const uploadArea = document.getElementById(`${prefix}-sig-upload-area`);
+  const drawBtn = document.getElementById(`${prefix}-sig-tab-draw`);
+  const uploadBtn = document.getElementById(`${prefix}-sig-tab-upload`);
+  if (tab === 'draw') {
+    drawArea.style.display = 'block'; uploadArea.style.display = 'none';
+    drawBtn.style.background = 'var(--blue)'; drawBtn.style.color = 'white'; drawBtn.style.borderColor = 'var(--blue)';
+    uploadBtn.style.background = 'white'; uploadBtn.style.color = 'var(--gray)'; uploadBtn.style.borderColor = 'var(--border)';
+    setTimeout(()=>initSigPad(`${prefix}-sig-canvas`), 30);
+  } else {
+    drawArea.style.display = 'none'; uploadArea.style.display = 'block';
+    uploadBtn.style.background = 'var(--blue)'; uploadBtn.style.color = 'white'; uploadBtn.style.borderColor = 'var(--blue)';
+    drawBtn.style.background = 'white'; drawBtn.style.color = 'var(--gray)'; drawBtn.style.borderColor = 'var(--border)';
+  }
+}
+
+function previewSigUpload(prefix) {
+  const file = document.getElementById(`${prefix}-sig-file`).files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById(`${prefix}-sig-upload-preview`);
+    const img = document.getElementById(`${prefix}-sig-upload-img`);
+    img.src = e.target.result;
+    preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function getSigData(canvasId) {
+  // Check for uploaded image first (from whichever prefix is active)
+  const prefix = canvasId.startsWith('emp') ? 'emp' : 'rev';
+  const uploadArea = document.getElementById(`${prefix}-sig-upload-area`);
+  if (uploadArea && uploadArea.style.display !== 'none') {
+    const img = document.getElementById(`${prefix}-sig-upload-img`);
+    if (img && img.src && img.src.startsWith('data:')) return img.src;
+    return null;
+  }
+  // Otherwise get from canvas drawing
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const ctx = canvas.getContext('2d');
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const hasDrawing = Array.from(pixels).some((v, i) => i % 4 === 3 && v > 0);
+  return hasDrawing ? canvas.toDataURL('image/png') : null;
 }
 
 async function submitReviewerForm() {
