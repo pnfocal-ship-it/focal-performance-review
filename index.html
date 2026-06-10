@@ -684,7 +684,63 @@ function clearSig(canvasId) {
 
 
 async function submitEmployeeForm() {
-  if (!document.getElementById('ef-declaration').checked) { toast('Please confirm the declaration before submitting.','error'); return; }
+  const errors = [];
+  const highlight = (id) => { const el = document.getElementById(id); if(el){ el.style.borderColor='var(--red)'; el.style.boxShadow='0 0 0 3px rgba(220,38,38,0.12)'; setTimeout(()=>{ el.style.borderColor=''; el.style.boxShadow=''; },3000); } };
+
+  // Required fields
+  const required = [
+    ['ef-empid','Employee ID'],['ef-title','Job title'],['ef-doj','Date of joining'],
+    ['ef-reviewer','Reviewer name'],['ef-dor','Date of review']
+  ];
+  required.forEach(([id,label])=>{ if(!document.getElementById(id).value.trim()){ errors.push(label); highlight(id); } });
+
+  // Self evaluation questions
+  ['ef-q0','ef-q1','ef-q2','ef-q3','ef-q4'].forEach((id,i)=>{
+    if(!document.getElementById(id).value.trim()){ errors.push(`Self evaluation question ${String.fromCharCode(65+i)}`); highlight(id); }
+  });
+
+  // At least 1 achievement
+  const achRows = document.querySelectorAll('#ach-tbody tr');
+  const hasAch = Array.from(achRows).some(r=>{ const ta=r.querySelector('[id^="ef-ach"]'); return ta&&ta.value.trim(); });
+  if(!hasAch){ errors.push('At least one achievement'); const tb=document.getElementById('ach-tbody'); if(tb){ tb.style.outline='2px solid var(--red)'; setTimeout(()=>tb.style.outline='',3000); } }
+
+  // All milestone rows that exist must be fully filled
+  const milRows = document.querySelectorAll('#mil-tbody tr');
+  milRows.forEach((row,i)=>{
+    const goal=row.querySelector('[id^="ef-goal"]'); const tl=row.querySelector('[id^="ef-tl"]'); const sc=row.querySelector('[id^="ef-sc"]');
+    if(goal&&!goal.value.trim()){ errors.push(`Milestone ${i+1} — goal`); goal.style.borderColor='var(--red)'; setTimeout(()=>goal.style.borderColor='',3000); }
+    if(tl&&!tl.value.trim()){ errors.push(`Milestone ${i+1} — timeline`); tl.style.borderColor='var(--red)'; setTimeout(()=>tl.style.borderColor='',3000); }
+    if(sc&&!sc.value.trim()){ errors.push(`Milestone ${i+1} — success criteria`); sc.style.borderColor='var(--red)'; setTimeout(()=>sc.style.borderColor='',3000); }
+  });
+
+  // All dev plan rows must be fully filled
+  const devRows = document.querySelectorAll('#dev-tbody tr');
+  devRows.forEach((row,i)=>{
+    const dn=row.querySelector('[id^="ef-dn"]'); const da=row.querySelector('[id^="ef-da"]'); const dac=row.querySelector('[id^="ef-dac"]'); const dd=row.querySelector('[id^="ef-dd"]');
+    if(dn&&!dn.value.trim()){ errors.push(`Development plan ${i+1} — need`); dn.style.borderColor='var(--red)'; setTimeout(()=>dn.style.borderColor='',3000); }
+    if(da&&!da.value.trim()){ errors.push(`Development plan ${i+1} — area`); da.style.borderColor='var(--red)'; setTimeout(()=>da.style.borderColor='',3000); }
+    if(dac&&!dac.value.trim()){ errors.push(`Development plan ${i+1} — action`); dac.style.borderColor='var(--red)'; setTimeout(()=>dac.style.borderColor='',3000); }
+    if(dd&&!dd.value.trim()){ errors.push(`Development plan ${i+1} — target date`); dd.style.borderColor='var(--red)'; setTimeout(()=>dd.style.borderColor='',3000); }
+  });
+
+  // Employee comments
+  const empComments = document.getElementById('ef-empcomments');
+  if(!empComments.value.trim()){ errors.push('Employee comments'); highlight('ef-empcomments'); }
+
+  // Signature
+  const sigData = getSigData('emp-sig-canvas');
+  const hasSavedSig = currentReview && currentReview.employee_signature;
+  if(!sigData && !hasSavedSig){ errors.push('Signature (draw or upload)'); const sigCard = document.getElementById('emp-sig-canvas'); if(sigCard){ sigCard.style.borderColor='var(--red)'; setTimeout(()=>sigCard.style.borderColor='var(--border)',3000); } }
+
+  // Declaration
+  if(!document.getElementById('ef-declaration').checked){ errors.push('Declaration checkbox'); }
+
+  if(errors.length){
+    toast(`Please fill in: ${errors.slice(0,3).join(', ')}${errors.length>3?` (+${errors.length-3} more)`:''}`, 'error');
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+
   const achievements = collectRows('ach-tbody', row => ({
     objective: row.querySelector('[id^="ef-ach"]') ? row.querySelector('[id^="ef-ach"]').value : '',
     feedback: row.querySelector('[id^="ef-fb"]') ? row.querySelector('[id^="ef-fb"]').value : ''
@@ -700,7 +756,6 @@ async function submitEmployeeForm() {
     action: row.querySelector('[id^="ef-dac"]') ? row.querySelector('[id^="ef-dac"]').value : '',
     date: row.querySelector('[id^="ef-dd"]') ? row.querySelector('[id^="ef-dd"]').value : ''
   }));
-  const sigData = getSigData('emp-sig-canvas');
   const payload = {
     employee_id: currentEmployee.id,
     emp_id_code: document.getElementById('ef-empid').value,
@@ -942,17 +997,25 @@ function renderReviewerForm() {
 
 function selectNB(key, el) {
   selectedNineBox = key;
+  // Clear all cells
   document.querySelectorAll('.nine-box-cell').forEach(c=>{
+    const cellKey = c.querySelector('.nb-label').textContent.trim();
     c.classList.remove('selected');
-    c.style.borderStyle = 'solid';
+    if (cellKey === suggestedNineBox && cellKey !== key) {
+      // Keep dashed hint on suggestion if not the one being selected
+      c.style.cssText = 'border:2px dashed var(--blue);background:transparent';
+    } else {
+      c.style.cssText = '';
+    }
   });
+  // Mark selected
   el.classList.add('selected');
-  el.style.borderStyle = 'solid';
+  el.style.cssText = 'border:2px solid var(--blue);background:var(--blue-light)';
 }
 
 // AUTO-SUGGEST 9-BOX
+let suggestedNineBox = null;
 function autoSuggestNineBox() {
-  // Calculate avg competency score
   const vals = COMPETENCIES.map((comp,i)=>{
     const sel = document.querySelector(`input[name="comp${i}"]:checked`);
     return sel && sel.value !== 'na' ? parseFloat(sel.value) : null;
@@ -960,7 +1023,6 @@ function autoSuggestNineBox() {
   if (!vals.length) return;
   const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
 
-  // Sentiment from comments (simple keyword check)
   const comments = (document.getElementById('rv-comments')||{value:''}).value.toLowerCase();
   const positiveWords = ['excellent','outstanding','exceptional','great','strong','impressive','above','exceeds','high','potential','grow','star','talented'];
   const negativeWords = ['struggle','below','poor','weak','inconsistent','needs','improve','concern','challenge','underperform','low'];
@@ -968,62 +1030,54 @@ function autoSuggestNineBox() {
   const negCount = negativeWords.filter(w=>comments.includes(w)).length;
   const sentiment = posCount > negCount ? 'positive' : negCount > posCount ? 'negative' : 'neutral';
 
-  // Determine performance level (High/Medium/Low) from avg score
   let perfLevel = avg >= 3.2 ? 'High' : avg >= 2.2 ? 'Medium' : 'Low';
-  // Adjust performance slightly based on sentiment
   if (sentiment === 'positive' && perfLevel === 'Medium') perfLevel = 'High';
   if (sentiment === 'negative' && perfLevel === 'Medium') perfLevel = 'Low';
 
-  // Determine potential level from comments keywords
   const highPotWords = ['potential','grow','future','leader','develop','promote','advance','progress','aspire'];
-  const lowPotWords = ['plateau','stagnant','resistant','reluctant','struggle to adapt','no growth'];
+  const lowPotWords = ['plateau','stagnant','resistant','reluctant','no growth'];
   const highPotCount = highPotWords.filter(w=>comments.includes(w)).length;
   const lowPotCount = lowPotWords.filter(w=>comments.includes(w)).length;
   let potLevel = highPotCount > lowPotCount ? 'High' : lowPotCount > 0 ? 'Low' : avg >= 3.0 ? 'High' : avg >= 2.0 ? 'Medium' : 'Low';
 
-  // Map to 9-box
   const matrix = {
-    'High-High': 'Star',
-    'High-Medium': 'High Potential',
-    'High-Low': 'Solid Potential',
-    'Medium-High': 'High Performance',
-    'Medium-Medium': 'Core Player',
-    'Medium-Low': 'Average Performer',
-    'Low-High': 'Performance Gem',
-    'Low-Medium': 'Inconsistent Player',
-    'Low-Low': 'Underachiever',
+    'High-High':'Star','High-Medium':'High Potential','High-Low':'Solid Potential',
+    'Medium-High':'High Performance','Medium-Medium':'Core Player','Medium-Low':'Average Performer',
+    'Low-High':'Performance Gem','Low-Medium':'Inconsistent Player','Low-Low':'Underachiever',
   };
-  const suggested = matrix[`${potLevel}-${perfLevel}`] || 'Core Player';
+  suggestedNineBox = matrix[`${potLevel}-${perfLevel}`] || 'Core Player';
 
-  // Show suggestion banner
+  // Update banner
   const banner = document.getElementById('nine-box-suggestion');
   const bannerText = document.getElementById('nine-box-suggestion-text');
-  if (banner && bannerText) {
-    banner.style.display = 'block';
-    bannerText.textContent = suggested;
-  }
+  if (banner && bannerText) { banner.style.display='block'; bannerText.textContent=suggestedNineBox; }
 
-  // Highlight suggested cell with dashed border (don't override user's selection)
+  // Reset ALL cells first, then apply exactly one state each
   document.querySelectorAll('.nine-box-cell').forEach(c=>{
     const cellKey = c.querySelector('.nb-label').textContent.trim();
-    if (cellKey === suggested && !c.classList.contains('selected')) {
-      c.style.borderStyle = 'dashed';
-      c.style.borderColor = 'var(--blue)';
-      c.style.background = 'rgba(18,81,163,0.04)';
-    } else if (!c.classList.contains('selected')) {
-      c.style.borderStyle = 'solid';
-      c.style.borderColor = 'var(--border)';
-      c.style.background = '';
+    const isSelected = selectedNineBox && cellKey === selectedNineBox;
+    const isSuggested = cellKey === suggestedNineBox;
+
+    c.classList.toggle('selected', isSelected);
+    if (isSelected) {
+      // Manually selected — solid blue border, blue bg
+      c.style.cssText = 'border:2px solid var(--blue);background:var(--blue-light)';
+    } else if (isSuggested) {
+      // Suggested but not selected — dashed border only, no fill
+      c.style.cssText = 'border:2px dashed var(--blue);background:transparent';
+    } else {
+      c.style.cssText = '';
     }
   });
 
-  // Auto-select suggested only if nothing manually chosen yet
+  // Auto-select suggestion only if reviewer hasn't manually picked yet
   if (!selectedNineBox) {
-    selectedNineBox = suggested;
+    selectedNineBox = suggestedNineBox;
     document.querySelectorAll('.nine-box-cell').forEach(c=>{
-      if (c.querySelector('.nb-label').textContent.trim() === suggested) {
+      const cellKey = c.querySelector('.nb-label').textContent.trim();
+      if (cellKey === suggestedNineBox) {
         c.classList.add('selected');
-        c.style.borderStyle = 'solid';
+        c.style.cssText = 'border:2px solid var(--blue);background:var(--blue-light)';
       }
     });
   }
@@ -1079,16 +1133,52 @@ function getSigData(canvasId) {
 }
 
 async function submitReviewerForm() {
+  const errors = [];
+
+  // All 13 competencies must be rated
   const ratings = {};
   COMPETENCIES.forEach((comp,i)=>{
     const sel = document.querySelector(`input[name="comp${i}"]:checked`);
     ratings[comp] = sel ? sel.value : '';
+    if (!sel) errors.push(`Competency: ${comp}`);
   });
+  if (errors.length) {
+    toast(`Please rate all competencies. Missing: ${errors.slice(0,2).join(', ')}${errors.length>2?` (+${errors.length-2} more)`:''}`, 'error');
+    const table = document.querySelector('.comp-table');
+    if(table){ table.style.outline='2px solid var(--red)'; setTimeout(()=>table.style.outline='',3000); }
+    return;
+  }
+
+  // Reviewer comments required
+  const revComments = document.getElementById('rv-comments');
+  if (!revComments.value.trim()) {
+    errors.push('Reviewer comments');
+    revComments.style.borderColor='var(--red)'; revComments.style.boxShadow='0 0 0 3px rgba(220,38,38,0.12)';
+    setTimeout(()=>{ revComments.style.borderColor=''; revComments.style.boxShadow=''; },3000);
+  }
+
+  // 9-box must be selected
+  if (!selectedNineBox) errors.push('9-box rating');
+
+  // Signature required
   const sigData = getSigData('rev-sig-canvas');
+  const hasSavedSig = currentReview && currentReview.reviewer_signature;
+  if (!sigData && !hasSavedSig) {
+    errors.push('Reviewer signature');
+    const canvas = document.getElementById('rev-sig-canvas');
+    if(canvas){ canvas.style.borderColor='var(--red)'; setTimeout(()=>canvas.style.borderColor='var(--border)',3000); }
+  }
+
+  if (errors.length) {
+    toast(`Please complete: ${errors.slice(0,3).join(', ')}${errors.length>3?` (+${errors.length-3} more)`:''}`, 'error');
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+
   const payload = {
     competency_ratings: ratings,
     competency_comments: document.getElementById('rv-compcomments').value,
-    reviewer_comments: document.getElementById('rv-comments').value,
+    reviewer_comments: revComments.value,
     nine_box_rating: selectedNineBox,
     reviewer_submitted: true,
     reviewer_submitted_at: new Date().toISOString(),
