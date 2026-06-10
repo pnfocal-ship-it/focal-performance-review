@@ -864,13 +864,18 @@ function renderReviewsTable() {
   const filter = document.getElementById('review-office-filter').value;
   let emps = filter ? allEmployees.filter(e=>e.office===filter) : allEmployees;
   const table = document.getElementById('reviews-table');
-  table.innerHTML = `<thead><tr><th>#</th><th>Employee</th><th>Office</th><th>Department</th><th>Employee form</th><th>Reviewer form</th><th>9-box</th><th></th></tr></thead><tbody>${
+  table.innerHTML = `<thead><tr><th>#</th><th>Employee</th><th>Office</th><th>Department</th><th>Employee form</th><th>Reviewer form</th><th>9-box</th><th style="min-width:160px">Actions</th></tr></thead><tbody>${
     emps.map(e=>{
       const rev = allReviews.find(r=>r.employee_id===e.id);
       const ed = rev && rev.employee_submitted;
       const rd = rev && rev.reviewer_submitted;
       const nb = rd ? rev.nine_box_rating||'—' : '—';
       const dept = allDepartments.find(d=>d.id===e.department_id);
+      const actions = [];
+      if (rev) actions.push(`<a onclick="viewReviewDetail('${e.id}')" style="color:var(--blue)">View</a>`);
+      actions.push(`<a onclick="startReviewerForm('${e.id}')" style="color:${!ed?'var(--gray);pointer-events:none':'var(--blue)'}">Review</a>`);
+      if (ed) actions.push(`<a onclick="resetEmployeeForm('${e.id}','${e.name}')" style="color:var(--amber)" title="Reset employee form only">Reset emp</a>`);
+      if (rd) actions.push(`<a onclick="resetReviewerForm('${e.id}','${e.name}')" style="color:var(--red)" title="Reset reviewer form only">Reset rev</a>`);
       return `<tr>
         <td style="font-family:'DM Mono',monospace;color:var(--gray)">${String(e.emp_number||'').padStart(2,'0')}</td>
         <td style="font-weight:500">${e.name}</td>
@@ -879,25 +884,41 @@ function renderReviewsTable() {
         <td><span class="badge ${ed?'badge-done':'badge-not-started'}">${ed?'✓ Done':'Pending'}</span></td>
         <td><span class="badge ${rd?'badge-done':ed?'badge-pending':'badge-not-started'}">${rd?'✓ Done':ed?'Awaiting':'Pending'}</span></td>
         <td style="font-size:12px">${nb}</td>
-        <td style="white-space:nowrap;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          ${rev?`<a onclick="viewReviewDetail('${e.id}')">View</a> ·`:''}
-          <a onclick="startReviewerForm('${e.id}')" style="color:${!ed?'var(--gray)':'var(--blue)'}">Review</a>
-          ${rev?`· <a onclick="resetReview('${e.id}','${e.name}')" style="color:var(--red)">Reset</a>`:''}
-        </td>
+        <td><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">${actions.map(a=>`<div>${a}</div>`).join('')}</div></td>
       </tr>`;
     }).join('')
   }</tbody>`;
 }
 
-async function resetReview(empId, empName) {
-  if (!confirm(`Reset the form for ${empName}?\n\nThis will permanently delete their submitted data so they can fill the form again from scratch.`)) return;
+async function resetEmployeeForm(empId, empName) {
+  if (!confirm(`Reset the EMPLOYEE form for ${empName}?\n\nThis clears everything the employee filled in. The reviewer section will also be cleared since it depends on the employee form. They will both need to resubmit.`)) return;
   const rev = allReviews.find(r=>r.employee_id===empId);
   if (!rev) return;
   try {
     await sbDelete('reviews','?id=eq.'+rev.id);
-    toast(`Form reset for ${empName}. They can now resubmit.`,'success');
+    toast(`Employee form reset for ${empName}.`,'success');
     await loadAdminDashboard();
-  } catch(e) { toast('Error resetting form: '+e.message,'error'); }
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+async function resetReviewerForm(empId, empName) {
+  if (!confirm(`Reset the REVIEWER form for ${empName}?\n\nThis clears only the reviewer's section (competency ratings, comments, 9-box, signature). The employee's self-evaluation is kept.`)) return;
+  const rev = allReviews.find(r=>r.employee_id===empId);
+  if (!rev) return;
+  try {
+    await sbPatch('reviews','?id=eq.'+rev.id, {
+      competency_ratings: {},
+      competency_comments: null,
+      reviewer_comments: null,
+      nine_box_rating: null,
+      reviewer_signature: null,
+      reviewer_submitted: false,
+      reviewer_submitted_at: null,
+      updated_at: new Date().toISOString(),
+    });
+    toast(`Reviewer form reset for ${empName}.`,'success');
+    await loadAdminDashboard();
+  } catch(e) { toast('Error: '+e.message,'error'); }
 }
 
 // REVIEWER FORM
