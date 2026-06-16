@@ -1163,6 +1163,64 @@ async function resetAllReviews(empId, empName) {
 }
 
 
+// 9-BOX AUTO SUGGEST
+let suggestedNineBox = null;
+function autoSuggestNineBox() {
+  const vals = COMPETENCIES.map((comp,i)=>{
+    const sel = document.querySelector('input[name="comp'+i+'"]:checked');
+    return sel && sel.value !== 'na' ? parseFloat(sel.value) : null;
+  }).filter(v=>v!==null);
+  if (!vals.length) return;
+  const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
+  const comments = (document.getElementById('rv-comments')||{value:''}).value.toLowerCase();
+  const posWords = ['excellent','outstanding','great','strong','impressive','exceeds','high','potential','star','talented'];
+  const negWords = ['struggle','below','poor','weak','inconsistent','needs','improve','concern','underperform'];
+  const pos = posWords.filter(w=>comments.includes(w)).length;
+  const neg = negWords.filter(w=>comments.includes(w)).length;
+  const sentiment = pos>neg?'positive':neg>pos?'negative':'neutral';
+  let perf = avg>=3.2?'High':avg>=2.2?'Medium':'Low';
+  if (sentiment==='positive'&&perf==='Medium') perf='High';
+  if (sentiment==='negative'&&perf==='Medium') perf='Low';
+  const highPot = ['potential','grow','future','leader','develop','promote'].filter(w=>comments.includes(w)).length;
+  const lowPot = ['plateau','stagnant','resistant','no growth'].filter(w=>comments.includes(w)).length;
+  let pot = highPot>lowPot?'High':lowPot>0?'Low':avg>=3.0?'High':avg>=2.0?'Medium':'Low';
+  const matrix = {'High-High':'Star','High-Medium':'High Potential','High-Low':'Solid Potential','Medium-High':'High Performance','Medium-Medium':'Core Player','Medium-Low':'Average Performer','Low-High':'Performance Gem','Low-Medium':'Inconsistent Player','Low-Low':'Underachiever'};
+  suggestedNineBox = matrix[pot+'-'+perf] || 'Core Player';
+  const banner = document.getElementById('nine-box-suggestion');
+  const bannerText = document.getElementById('nine-box-suggestion-text');
+  if (banner && bannerText) { banner.style.display='block'; bannerText.textContent=suggestedNineBox; }
+  document.querySelectorAll('.nine-box-cell').forEach(c=>{
+    const key = c.querySelector('.nb-label').textContent.trim();
+    const isSelected = selectedNineBox && key===selectedNineBox;
+    const isSuggested = key===suggestedNineBox;
+    c.classList.toggle('selected', isSelected);
+    if (isSelected) { c.style.cssText='border:2px solid var(--blue);background:var(--blue-light)'; }
+    else if (isSuggested) { c.style.cssText='border:2px dashed var(--blue);background:transparent'; }
+    else { c.style.cssText=''; }
+  });
+  if (!selectedNineBox) {
+    selectedNineBox = suggestedNineBox;
+    document.querySelectorAll('.nine-box-cell').forEach(c=>{
+      if (c.querySelector('.nb-label').textContent.trim()===suggestedNineBox) {
+        c.classList.add('selected');
+        c.style.cssText='border:2px solid var(--blue);background:var(--blue-light)';
+      }
+    });
+  }
+}
+
+function selectNB(key, el) {
+  selectedNineBox = key;
+  document.querySelectorAll('.nine-box-cell').forEach(c=>{
+    const cellKey = c.querySelector('.nb-label').textContent.trim();
+    c.classList.remove('selected');
+    if (cellKey===suggestedNineBox && cellKey!==key) { c.style.cssText='border:2px dashed var(--blue);background:transparent'; }
+    else { c.style.cssText=''; }
+  });
+  el.classList.add('selected');
+  el.style.cssText='border:2px solid var(--blue);background:var(--blue-light)';
+}
+
 function renderReviewerForm() {
   const e = currentEmployee;
   const r = currentReview || {};
