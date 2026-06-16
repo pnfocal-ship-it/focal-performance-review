@@ -1943,7 +1943,7 @@ function renderReviewerDash() {
         <div class="manage-item-sub">${emp.office}${dept?' · '+dept.name:''} · <span style="color:var(--blue);font-weight:500">${orderLabel}</span></div>
       </div>
       <span class="badge ${myDone?'badge-done':empDone?'badge-pending':'badge-not-started'}">${myDone?'✓ Done':empDone?'Awaiting your review':'Employee pending'}</span>
-      ${empDone?`<button class="btn ${myDone?'btn-secondary':'btn-primary'} btn-sm" onclick="startReviewerForm('${emp.id}',${a.reviewer_order})">${myDone?'Edit review':'Review now'}</button>`:''}
+      ${empDone?`<button class="btn ${myDone?'btn-secondary':'btn-primary'} btn-sm" onclick="alert('clicked: ${emp.id} order: ${a.reviewer_order}'); startReviewerForm('${emp.id}',${a.reviewer_order})">${myDone?'Edit review':'Review now'}</button>`:''}
     </div>`;
   }).join('') + '</div>';
 }
