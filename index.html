@@ -1209,8 +1209,9 @@ function renderReviewerForm() {
     <button class="btn btn-primary" onclick="submitReviewerForm()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Submit review</button>
   </div>`;
   setTimeout(()=>{ initSigPad('rev-sig-canvas'); autoSuggestNineBox(); }, 50);
-  document.querySelectorAll('input[type=radio]').forEach(r=>r.addEventListener('change', autoSuggestNineBox));
-  document.getElementById('rv-comments') && document.getElementById('rv-comments').addEventListener('input', autoSuggestNineBox);
+  document.querySelectorAll('input[type=radio]').forEach(radio=>radio.addEventListener('change', autoSuggestNineBox));
+  const rvComments = document.getElementById('rv-comments');
+  if (rvComments) rvComments.addEventListener('input', autoSuggestNineBox);
 }
 
 async function submitReviewerForm() {
@@ -1943,7 +1944,7 @@ function renderReviewerDash() {
         <div class="manage-item-sub">${emp.office}${dept?' · '+dept.name:''} · <span style="color:var(--blue);font-weight:500">${orderLabel}</span></div>
       </div>
       <span class="badge ${myDone?'badge-done':empDone?'badge-pending':'badge-not-started'}">${myDone?'✓ Done':empDone?'Awaiting your review':'Employee pending'}</span>
-      ${empDone?`<button class="btn ${myDone?'btn-secondary':'btn-primary'} btn-sm" onclick="alert('clicked: ${emp.id} order: ${a.reviewer_order}'); startReviewerForm('${emp.id}',${a.reviewer_order})">${myDone?'Edit review':'Review now'}</button>`:''}
+      ${empDone?`<button class="btn ${myDone?'btn-secondary':'btn-primary'} btn-sm" onclick="startReviewerForm('${emp.id}',${a.reviewer_order})">${myDone?'Edit review':'Review now'}</button>`:''}
     </div>`;
   }).join('') + '</div>';
 }
@@ -1951,38 +1952,42 @@ function renderReviewerDash() {
 // REVIEWER FORM - multi-reviewer support
 let currentReviewerOrder = 1;
 async function startReviewerForm(empId, reviewerOrder=1) {
-  toast('Step 1: loading data...','');
   await loadAll();
-  toast('Step 2: checking access...','');
 
+  // Access control
   if (!isAdminSession) {
-    if (!currentReviewer) { toast('No reviewer session — please log in again','error'); showScreen('screen-home'); return; }
-    const allowed = allAssignments.some(a=>a.reviewer_id===currentReviewer.id&&a.employee_id===empId);
-    if (!allowed) { toast('Not assigned to this employee','error'); return; }
+    if (!currentReviewer) { toast('Please log in as a reviewer first.','error'); showScreen('screen-home'); return; }
+    const allowed = allAssignments.some(a=>a.reviewer_id===currentReviewer.id && a.employee_id===empId);
+    if (!allowed) { toast('You are not assigned to review this employee.','error'); return; }
   }
 
-  toast('Step 3: finding employee...','');
+  // Find employee
   currentEmployee = allEmployees.find(e=>e.id===empId);
-  if (!currentEmployee) { toast('Employee not found in list','error'); return; }
+  if (!currentEmployee) { toast('Employee not found.','error'); return; }
 
-  toast('Step 4: finding self-eval... reviews total: '+allReviews.length,'');
+  // Find self-eval — just needs employee_submitted true
   const empSelfEval = allReviews.find(r=>r.employee_id===empId && r.employee_submitted===true);
-  if (!empSelfEval) { toast('Employee self-eval not found — has employee submitted?','error'); return; }
+  if (!empSelfEval) { toast('Employee has not submitted their form yet.','error'); return; }
 
-  toast('Step 5: rendering form...','');
-  const reviewerActualId = isAdminSession ? null : (currentReviewer ? currentReviewer.id : null);
+  // Find existing reviewer row if already submitted
   currentReview = allReviews.find(r=>
     r.employee_id===empId &&
     r.reviewer_number===reviewerOrder &&
-    r.reviewer_submitted === true &&
-    (isAdminSession || r.reviewer_id_actual===reviewerActualId)
+    r.reviewer_submitted===true
   ) || null;
+
   currentReviewerOrder = reviewerOrder;
-  selectedNineBox = currentReview ? currentReview.nine_box_rating || null : null;
   currentEmployeeSelfEval = empSelfEval;
+  selectedNineBox = currentReview ? currentReview.nine_box_rating || null : null;
   suggestedNineBox = null;
-  renderReviewerForm();
-  showScreen('screen-employee-form');
+
+  try {
+    renderReviewerForm();
+    showScreen('screen-employee-form');
+  } catch(err) {
+    toast('Error loading form: '+err.message,'error');
+    console.error(err);
+  }
 }
 
 let currentEmployeeSelfEval = null;
