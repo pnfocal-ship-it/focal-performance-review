@@ -239,34 +239,59 @@ select.form-input { cursor: pointer; }
     </div>
   </div>
   <div class="topbar-right">
-    <button class="btn-admin-nav" onclick="showScreen('screen-admin-login')">Reviewer / Admin →</button>
+    <button class="btn-admin-nav" onclick="showScreen('screen-home')">🏠 Home</button>
   </div>
 </div>
 
 <div class="app">
 
-  <!-- HOME -->
+  <!-- ROLE SELECT (HOME) -->
   <div id="screen-home" class="screen active">
     <div class="home-hero">
       <div>
         <h2>Performance Development Review</h2>
-        <p>Select your name below to fill out your self-evaluation form</p>
+        <p>Welcome to Focal's Performance Review portal</p>
       </div>
       <div class="home-hero-badge">📅 Annual Review 2025–26</div>
     </div>
-    <div class="card">
-      <div class="office-tabs" id="office-tabs">
-        <button class="office-tab active" onclick="selectOffice('Dubai', this)">🇦🇪 Dubai</button>
-        <button class="office-tab" onclick="selectOffice('India', this)">🇮🇳 India</button>
-        <button class="office-tab" onclick="selectOffice('Sri Lanka', this)">🇱🇰 Sri Lanka</button>
+    <div class="card" style="max-width:440px;margin:0 auto">
+      <div class="card-title">Who are you?</div>
+      <div class="form-group" style="margin-bottom:14px">
+        <label class="form-label">Type your full name</label>
+        <input class="form-input" id="home-name-input" placeholder="e.g. James Esau" oninput="onHomeNameInput()" autocomplete="off"/>
+        <div id="home-name-suggestions" style="background:white;border:1px solid var(--border);border-radius:8px;margin-top:4px;display:none;box-shadow:var(--shadow-md);max-height:200px;overflow-y:auto"></div>
       </div>
-      <div id="employee-list"><div class="loading"><div class="spinner"></div> Loading employees...</div></div>
+      <div id="home-role-select" style="display:none">
+        <div id="home-selected-name" style="font-size:14px;font-weight:600;color:var(--blue);margin-bottom:12px;padding:8px 12px;background:var(--blue-light);border-radius:8px"></div>
+        <div id="home-role-options"></div>
+      </div>
+      <div id="home-no-access" style="display:none;padding:12px;background:var(--red-light);border-radius:8px;font-size:13px;color:var(--red);text-align:center">
+        ⚠️ Name not found in our system. Please check the spelling or contact HR.
+      </div>
+    </div>
+  </div>
+
+  <!-- EMPLOYEE ID VERIFY -->
+  <div id="screen-emp-verify" class="screen">
+    <div class="back-nav" onclick="showScreen('screen-home');resetHome()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </div>
+    <div class="card pw-card">
+      <div class="pw-title" id="verify-emp-name">Verify your identity</div>
+      <div class="pw-sub">Enter your Employee ID to access your form. Contact HR if you don't know it.</div>
+      <div class="error-msg" id="verify-err">Incorrect Employee ID. Please try again.</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Employee ID</label>
+        <input class="form-input" type="text" id="verify-code-input" placeholder="e.g. DXB-001" onkeydown="if(event.key==='Enter')verifyEmpCode()"/>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="verifyEmpCode()">Continue</button>
     </div>
   </div>
 
   <!-- EMPLOYEE FORM -->
   <div id="screen-employee-form" class="screen">
-    <div class="back-nav" onclick="showScreen('screen-home')">
+    <div class="back-nav" onclick="showScreen('screen-home');resetHome()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       Back to home
     </div>
@@ -274,19 +299,58 @@ select.form-input { cursor: pointer; }
     <div id="emp-form-body"></div>
   </div>
 
-  <!-- ADMIN LOGIN -->
-  <div id="screen-admin-login" class="screen">
-    <div class="back-nav" onclick="showScreen('screen-home')">
+  <!-- REVIEWER LOGIN -->
+  <div id="screen-reviewer-login" class="screen">
+    <div class="back-nav" onclick="showScreen('screen-home');resetHome()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
       Back
     </div>
     <div class="card pw-card">
-      <div class="pw-title">🔒 Reviewer & Admin Login</div>
-      <div class="pw-sub">Enter the password to access reviewer and admin features.</div>
+      <div class="pw-title">📝 Reviewer Login</div>
+      <div class="pw-sub" id="reviewer-login-sub">Enter your Employee ID and reviewer password to continue.</div>
+      <div class="error-msg" id="reviewer-err">Incorrect details. Please check and try again.</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Your Employee ID</label>
+        <input class="form-input" type="text" id="reviewer-code-input" placeholder="e.g. DXB-001"/>
+      </div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Reviewer password</label>
+        <input class="form-input" type="password" id="reviewer-pw-input" placeholder="Enter reviewer password" onkeydown="if(event.key==='Enter')checkReviewerLogin()"/>
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="checkReviewerLogin()">Login</button>
+    </div>
+  </div>
+
+  <!-- REVIEWER DASHBOARD -->
+  <div id="screen-reviewer-dash" class="screen">
+    <div class="back-nav" onclick="showScreen('screen-home');resetHome()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Logout
+    </div>
+    <div class="card" style="background:var(--blue);color:white;margin-bottom:1rem">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;opacity:0.7;text-transform:uppercase;margin-bottom:4px">Reviewer dashboard</div>
+      <div style="font-size:18px;font-weight:600" id="reviewer-dash-name"></div>
+      <div style="font-size:13px;opacity:0.75" id="reviewer-dash-sub"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Your assigned reviews</div>
+      <div id="reviewer-assignments-list"></div>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN -->
+  <div id="screen-admin-login" class="screen">
+    <div class="back-nav" onclick="showScreen('screen-home');resetHome()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+      Back
+    </div>
+    <div class="card pw-card">
+      <div class="pw-title">🔐 Admin Login</div>
+      <div class="pw-sub">Enter the admin password to access the HR dashboard.</div>
       <div class="error-msg" id="admin-err">Incorrect password. Please try again.</div>
       <div class="form-group" style="margin-bottom:12px">
         <label class="form-label">Password</label>
-        <input class="form-input" type="password" id="admin-pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')checkAdminPw()"/>
+        <input class="form-input" type="password" id="admin-pw-input" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')checkAdminPw()"/>
       </div>
       <button class="btn btn-primary" style="width:100%" onclick="checkAdminPw()">Login</button>
     </div>
@@ -303,17 +367,24 @@ select.form-input { cursor: pointer; }
       <button class="admin-tab active" onclick="switchAdminTab('reviews', this)">All Reviews</button>
       <button class="admin-tab" onclick="switchAdminTab('employees', this)">Manage Employees</button>
       <button class="admin-tab" onclick="switchAdminTab('departments', this)">Manage Departments</button>
+      <button class="admin-tab" onclick="switchAdminTab('assignments', this);renderAssignments()">Reviewer Assignments</button>
       <button class="admin-tab" onclick="switchAdminTab('leaderboard', this);renderLeaderboard()">🏆 Leaderboard</button>
     </div>
 
     <div id="panel-reviews" class="admin-panel active">
       <div class="card" style="padding:0;overflow:hidden">
-        <div style="padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+        <div style="padding:1rem 1.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:8px">
           <div style="font-weight:500;font-size:14px">All Submissions</div>
-          <select class="form-input" style="width:auto;font-size:13px;padding:6px 10px" id="review-office-filter" onchange="renderReviewsTable()">
-            <option value="">All offices</option>
-            <option>Dubai</option><option>India</option><option>Sri Lanka</option>
-          </select>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select class="form-input" style="width:auto;font-size:13px;padding:6px 10px" id="review-office-filter" onchange="renderReviewsTable()">
+              <option value="">All offices</option>
+              <option>Dubai</option><option>India</option><option>Sri Lanka</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" onclick="bulkDownloadPDF()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Download all PDFs
+            </button>
+          </div>
         </div>
         <div style="overflow-x:auto"><table class="reviews-table" id="reviews-table"></table></div>
       </div>
@@ -361,6 +432,25 @@ select.form-input { cursor: pointer; }
         </div>
       </div>
       <div id="dept-manage-list"></div>
+    </div>
+
+    <div id="panel-assignments" class="admin-panel">
+      <div class="card">
+        <div class="card-title">Assign reviewer</div>
+        <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Choose a reviewer and the employee they should review. Reviewers will only see employees assigned to them.</p>
+        <div class="form-grid" style="grid-template-columns:1fr 1fr auto;align-items:flex-end">
+          <div class="form-group">
+            <label class="form-label">Reviewer</label>
+            <select class="form-input" id="assign-reviewer-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Reviews this employee</label>
+            <select class="form-input" id="assign-employee-select"></select>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="addAssignment()" style="margin-bottom:0">+ Assign</button>
+        </div>
+      </div>
+      <div id="assignments-list"></div>
     </div>
 
     <div id="panel-leaderboard" class="admin-panel">
@@ -415,7 +505,10 @@ select.form-input { cursor: pointer; }
 <script>
 const SUPABASE_URL = 'https://sbddjyjjcphgremwwydu.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNiZGRqeWpqY3BoZ3JlbXd3eWR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4ODg2NTIsImV4cCI6MjA5NjQ2NDY1Mn0.zcYjRpKUCy1xOMnsQBcVgi_EKTeND5qYoy7mkV5tMAQ';
-const ADMIN_PASSWORD = 'Focalreview@123';
+let APP_SETTINGS = {}; // passwords fetched from database, not stored in code
+let currentReviewer = null; // logged-in reviewer
+let isAdminSession = false;
+let allAssignments = [];
 const COMPETENCIES = ['Job Knowledge','Quality of work','Software skills','Planning, budgeting & forecasting','Quality assurance in work','Meeting deadlines / commitments','Delegation skills','Communication skills','Initiative & Innovation','Problem-solving & decision-making','Team-working & collaboration','Adaptability & Learning','Integrity & Work Ethics'];
 const NINE_BOX = [
   {key:'Star',sub:'High potential, high performance'},
@@ -460,14 +553,19 @@ function closeModal() { document.getElementById('detail-modal').style.display='n
 // LOAD DATA
 async function loadAll() { 
   try {
-    const [emps, depts, revs] = await Promise.all([
+    const [emps, depts, revs, assigns, settings] = await Promise.all([
       sbGet('employees','?select=*,departments(id,name)&active=eq.true&order=emp_number'),
       sbGet('departments','?order=name'),
-      sbGet('reviews','?select=*,employees(name,office)')
+      sbGet('reviews','?select=*,employees(name,office)'),
+      sbGet('reviewer_assignments','?select=*'),
+      sbGet('app_settings','')
     ]);
     allEmployees = emps || [];
     allDepartments = depts || [];
     allReviews = revs || [];
+    allAssignments = assigns || [];
+    APP_SETTINGS = {};
+    (settings||[]).forEach(s => APP_SETTINGS[s.key] = s.value);
   } catch(e) { toast('Failed to load data: '+e.message,'error'); }
 }
 
@@ -519,17 +617,107 @@ function selectOffice(office, btn) {
   renderEmployeeList();
 }
 
-// EMPLOYEE FORM
+// EMPLOYEE FORM (with ID verification)
+let pendingEmpId = null;
 async function startEmployeeForm(empId) {
-  currentEmployee = allEmployees.find(e=>e.id===empId);
-  if (!currentEmployee) return;
-  currentReview = allReviews.find(r=>r.employee_id===empId) || null;
-  if (currentReview && currentReview.employee_submitted) {
-    toast('You have already submitted your form. Contact admin if changes are needed.','');
+  const emp = allEmployees.find(e=>e.id===empId);
+  if (!emp) return;
+  const rev = allReviews.find(r=>r.employee_id===empId);
+  if (rev && rev.employee_submitted) {
+    toast('This form has already been submitted. Contact HR/admin if changes are needed.','');
     return;
   }
+  pendingEmpId = empId;
+  document.getElementById('verify-emp-name').textContent = `Hi, ${emp.name}`;
+  document.getElementById('verify-code-input').value = '';
+  document.getElementById('verify-err').style.display = 'none';
+  showScreen('screen-emp-verify');
+  setTimeout(()=>document.getElementById('verify-code-input').focus(), 100);
+}
+
+function verifyEmpCode() {
+  const emp = allEmployees.find(e=>e.id===pendingEmpId);
+  if (!emp) return;
+  const entered = document.getElementById('verify-code-input').value.trim().toUpperCase();
+  const actual = (emp.emp_code||'').trim().toUpperCase();
+  if (!actual) { toast('No Employee ID set for you yet. Please contact HR.','error'); return; }
+  if (entered !== actual) {
+    document.getElementById('verify-err').style.display = 'block';
+    return;
+  }
+  document.getElementById('verify-err').style.display = 'none';
+  currentEmployee = emp;
+  currentReview = allReviews.find(r=>r.employee_id===emp.id) || null;
   renderEmployeeForm();
   showScreen('screen-employee-form');
+}
+
+// REVIEWER LOGIN
+async function prepReviewerLogin() {
+  showScreen('screen-reviewer-login');
+  if (!allEmployees.length) await loadAll();
+  // Only employees who have assignments can be reviewers
+  const reviewerIds = [...new Set(allAssignments.map(a=>a.reviewer_id))];
+  const reviewers = allEmployees.filter(e=>reviewerIds.includes(e.id));
+  const sel = document.getElementById('reviewer-name-select');
+  if (!reviewers.length) {
+    sel.innerHTML = '<option value="">No reviewers assigned yet — contact admin</option>';
+  } else {
+    sel.innerHTML = '<option value="">Select your name...</option>' + reviewers.map(r=>`<option value="${r.id}">${r.name} (${r.office})</option>`).join('');
+  }
+  document.getElementById('reviewer-err').style.display = 'none';
+  document.getElementById('reviewer-code-input').value = '';
+  document.getElementById('reviewer-pw-input').value = '';
+}
+
+async function checkReviewerLogin() {
+  const reviewerId = document.getElementById('reviewer-name-select').value;
+  const code = document.getElementById('reviewer-code-input').value.trim().toUpperCase();
+  const pw = document.getElementById('reviewer-pw-input').value;
+  const errEl = document.getElementById('reviewer-err');
+  if (!reviewerId) { errEl.textContent='Please select your name.'; errEl.style.display='block'; return; }
+  if (!APP_SETTINGS.reviewer_password) await loadAll();
+  const emp = allEmployees.find(e=>e.id===reviewerId);
+  const codeOk = emp && (emp.emp_code||'').trim().toUpperCase() === code;
+  const pwOk = pw === APP_SETTINGS.reviewer_password;
+  if (!codeOk || !pwOk) {
+    errEl.textContent = 'Incorrect details. Please check your Employee ID and password.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  currentReviewer = emp;
+  isAdminSession = false;
+  renderReviewerDash();
+  showScreen('screen-reviewer-dash');
+}
+
+function renderReviewerDash() {
+  const myAssignments = allAssignments.filter(a=>a.reviewer_id===currentReviewer.id);
+  document.getElementById('reviewer-dash-name').textContent = currentReviewer.name;
+  document.getElementById('reviewer-dash-sub').textContent = `${currentReviewer.office} · ${myAssignments.length} assigned review${myAssignments.length!==1?'s':''}`;
+  const list = document.getElementById('reviewer-assignments-list');
+  if (!myAssignments.length) {
+    list.innerHTML = '<p style="font-size:13px;color:var(--gray)">No employees assigned to you yet. Contact admin.</p>';
+    return;
+  }
+  list.innerHTML = '<div class="manage-list">' + myAssignments.map(a=>{
+    const emp = allEmployees.find(e=>e.id===a.employee_id);
+    if (!emp) return '';
+    const rev = allReviews.find(r=>r.employee_id===emp.id);
+    const ed = rev && rev.employee_submitted;
+    const rd = rev && rev.reviewer_submitted;
+    const dept = allDepartments.find(d=>d.id===emp.department_id);
+    return `<div class="manage-item">
+      <div class="avatar" style="width:34px;height:34px;font-size:12px">${initials(emp.name)}</div>
+      <div class="manage-item-info">
+        <div class="manage-item-name">${emp.name}</div>
+        <div class="manage-item-sub">${emp.office}${dept?' · '+dept.name:''}</div>
+      </div>
+      <span class="badge ${rd?'badge-done':ed?'badge-pending':'badge-not-started'}">${rd?'✓ Reviewed':ed?'Ready to review':'Awaiting employee'}</span>
+      ${ed?`<button class="btn ${rd?'btn-secondary':'btn-primary'} btn-sm" onclick="startReviewerForm('${emp.id}')">${rd?'Edit review':'Review now'}</button>`:''}
+    </div>`;
+  }).join('') + '</div>';
 }
 
 function renderEmployeeForm() {
@@ -826,11 +1014,13 @@ function removeRow(tbodyId, rowId) {
 }
 
 // ADMIN
-function checkAdminPw() {
+async function checkAdminPw() {
   const pw = document.getElementById('admin-pw-input').value;
-  if (pw === ADMIN_PASSWORD) {
+  if (!APP_SETTINGS.admin_password) await loadAll();
+  if (pw === APP_SETTINGS.admin_password) {
     document.getElementById('admin-err').style.display='none';
     document.getElementById('admin-pw-input').value='';
+    isAdminSession = true;
     loadAdminDashboard();
     showScreen('screen-admin');
   } else {
@@ -862,26 +1052,32 @@ function renderReviewsTable() {
   const filter = document.getElementById('review-office-filter').value;
   let emps = filter ? allEmployees.filter(e=>e.office===filter) : allEmployees;
   const table = document.getElementById('reviews-table');
-  table.innerHTML = `<thead><tr><th>#</th><th>Employee</th><th>Office</th><th>Department</th><th>Employee form</th><th>Reviewer form</th><th>9-box</th><th style="min-width:160px">Actions</th></tr></thead><tbody>${
+  table.innerHTML = `<thead><tr><th>#</th><th>Employee</th><th>Office</th><th>Dept</th><th>Self-eval</th><th>R1</th><th>R2</th><th>R3</th><th style="min-width:160px">Actions</th></tr></thead><tbody>${
     emps.map(e=>{
-      const rev = allReviews.find(r=>r.employee_id===e.id);
-      const ed = rev && rev.employee_submitted;
-      const rd = rev && rev.reviewer_submitted;
-      const nb = rd ? rev.nine_box_rating||'—' : '—';
       const dept = allDepartments.find(d=>d.id===e.department_id);
+      const selfEval = allReviews.find(r=>r.employee_id===e.id&&(!r.reviewer_number||r.reviewer_number===1));
+      const r1 = allReviews.find(r=>r.employee_id===e.id&&r.reviewer_number===1&&r.reviewer_submitted);
+      const r2 = allReviews.find(r=>r.employee_id===e.id&&r.reviewer_number===2&&r.reviewer_submitted);
+      const r3 = allReviews.find(r=>r.employee_id===e.id&&r.reviewer_number===3&&r.reviewer_submitted);
+      const ed = selfEval && selfEval.employee_submitted;
+      const myAssigns = allAssignments.filter(a=>a.employee_id===e.id).sort((a,b)=>a.reviewer_order-b.reviewer_order);
+      const nb = r1 ? r1.nine_box_rating||'—' : '—';
       const actions = [];
-      if (rev) actions.push(`<a onclick="viewReviewDetail('${e.id}')" style="color:var(--blue)">View</a>`);
-      actions.push(`<a onclick="startReviewerForm('${e.id}')" style="color:${!ed?'var(--gray);pointer-events:none':'var(--blue)'}">Review</a>`);
-      if (ed) actions.push(`<a onclick="resetEmployeeForm('${e.id}','${e.name}')" style="color:var(--amber)" title="Reset employee form only">Reset emp</a>`);
-      if (rd) actions.push(`<a onclick="resetReviewerForm('${e.id}','${e.name}')" style="color:var(--red)" title="Reset reviewer form only">Reset rev</a>`);
+      if (selfEval||r1||r2||r3) actions.push(`<a onclick="viewReviewDetail('${e.id}')" style="color:var(--blue)">View</a>`);
+      myAssigns.forEach(a=>{
+        const rev = allEmployees.find(emp=>emp.id===a.reviewer_id);
+        const revName = rev ? rev.name.split(' ')[0] : 'R'+a.reviewer_order;
+        actions.push(`<a onclick="startReviewerForm('${e.id}',${a.reviewer_order})" style="color:${!ed?'var(--gray);pointer-events:none':'var(--blue)'}">Review (${revName})</a>`);
+      });
+      if (ed) actions.push(`<a onclick="resetEmployeeForm('${e.id}','${e.name}')" style="color:var(--amber)">Reset emp</a>`);
+      if (r1||r2||r3) actions.push(`<a onclick="resetAllReviews('${e.id}','${e.name}')" style="color:var(--red)">Reset reviews</a>`);
+      const badge = (done) => done ? `<span class="badge badge-done">✓</span>` : `<span class="badge badge-not-started">—</span>`;
       return `<tr>
         <td style="font-family:'DM Mono',monospace;color:var(--gray)">${String(e.emp_number||'').padStart(2,'0')}</td>
-        <td style="font-weight:500">${e.name}</td>
-        <td>${e.office}</td>
+        <td style="font-weight:500">${e.name}</td><td>${e.office}</td>
         <td>${dept?dept.name:'—'}</td>
         <td><span class="badge ${ed?'badge-done':'badge-not-started'}">${ed?'✓ Done':'Pending'}</span></td>
-        <td><span class="badge ${rd?'badge-done':ed?'badge-pending':'badge-not-started'}">${rd?'✓ Done':ed?'Awaiting':'Pending'}</span></td>
-        <td style="font-size:12px">${nb}</td>
+        <td>${badge(r1)}</td><td>${badge(r2)}</td><td>${badge(r3)}</td>
         <td><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-start">${actions.map(a=>`<div>${a}</div>`).join('')}</div></td>
       </tr>`;
     }).join('')
@@ -889,38 +1085,39 @@ function renderReviewsTable() {
 }
 
 async function resetEmployeeForm(empId, empName) {
-  if (!confirm(`Reset the EMPLOYEE form for ${empName}?\n\nThis clears everything the employee filled in. The reviewer section will also be cleared since it depends on the employee form. They will both need to resubmit.`)) return;
-  const rev = allReviews.find(r=>r.employee_id===empId);
-  if (!rev) return;
+  if (!confirm(`Reset the EMPLOYEE form for ${empName}?\n\nThis clears the self-evaluation. All reviewer forms for this employee will also be deleted.`)) return;
+  const revs = allReviews.filter(r=>r.employee_id===empId);
   try {
-    await sbDelete('reviews','?id=eq.'+rev.id);
-    toast(`Employee form reset for ${empName}.`,'success');
+    for (const rev of revs) await sbDelete('reviews','?id=eq.'+rev.id);
+    toast(`All forms reset for ${empName}.`,'success');
     await loadAdminDashboard();
   } catch(e) { toast('Error: '+e.message,'error'); }
 }
 
-async function resetReviewerForm(empId, empName) {
-  if (!confirm(`Reset the REVIEWER form for ${empName}?\n\nThis clears only the reviewer's section (competency ratings, comments, 9-box, signature). The employee's self-evaluation is kept.`)) return;
-  const rev = allReviews.find(r=>r.employee_id===empId);
-  if (!rev) return;
+async function resetAllReviews(empId, empName) {
+  if (!confirm(`Reset ALL REVIEWER forms for ${empName}?\n\nThis clears Reviewer 1, 2 and 3 sections. The employee's self-evaluation is kept.`)) return;
+  const revs = allReviews.filter(r=>r.employee_id===empId && r.reviewer_number && r.reviewer_number >= 1 && r.reviewer_submitted);
   try {
-    await sbPatch('reviews','?id=eq.'+rev.id, {
-      competency_ratings: {},
-      competency_comments: null,
-      reviewer_comments: null,
-      nine_box_rating: null,
-      reviewer_signature: null,
-      reviewer_submitted: false,
-      reviewer_submitted_at: null,
-      updated_at: new Date().toISOString(),
-    });
-    toast(`Reviewer form reset for ${empName}.`,'success');
+    for (const rev of revs) {
+      await sbPatch('reviews','?id=eq.'+rev.id, {
+        competency_ratings:{}, competency_comments:null, reviewer_comments:null,
+        nine_box_rating:null, reviewer_signature:null, reviewer_submitted:false,
+        reviewer_submitted_at:null, updated_at:new Date().toISOString(),
+      });
+    }
+    toast(`Reviewer forms reset for ${empName}.`,'success');
     await loadAdminDashboard();
   } catch(e) { toast('Error: '+e.message,'error'); }
 }
 
 // REVIEWER FORM
 async function startReviewerForm(empId) {
+  // Access control: admins can review anyone; reviewers only their assigned employees
+  if (!isAdminSession) {
+    if (!currentReviewer) { toast('Please log in as a reviewer first.','error'); showScreen('screen-home'); return; }
+    const allowed = allAssignments.some(a=>a.reviewer_id===currentReviewer.id && a.employee_id===empId);
+    if (!allowed) { toast('You are not assigned to review this employee.','error'); return; }
+  }
   currentEmployee = allEmployees.find(e=>e.id===empId);
   currentReview = allReviews.find(r=>r.employee_id===empId) || null;
   if (!currentReview || !currentReview.employee_submitted) { toast('Employee has not yet submitted their form.',''); return; }
@@ -932,269 +1129,75 @@ async function startReviewerForm(empId) {
 function renderReviewerForm() {
   const e = currentEmployee;
   const r = currentReview || {};
+  const empData = currentEmployeeSelfEval || {};
+  const orderLabel = currentReviewerOrder===1?'Reviewer 1':currentReviewerOrder===2?'Reviewer 2':'Reviewer 3';
+  const reviewerName = isAdminSession ? 'Admin' : (currentReviewer ? currentReviewer.name : '');
   document.getElementById('emp-progress').style.width='60%';
   document.getElementById('emp-form-body').innerHTML = `
   <div class="card" style="background:var(--blue);color:white">
-    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;opacity:0.7;text-transform:uppercase;margin-bottom:4px">Reviewer section</div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:0.08em;opacity:0.7;text-transform:uppercase;margin-bottom:4px">Reviewer section — ${orderLabel}</div>
     <div style="font-size:18px;font-weight:600">${e.name}</div>
-    <div style="font-size:13px;opacity:0.75">${e.office} ${r.job_title?'· '+r.job_title:''}</div>
+    <div style="font-size:13px;opacity:0.75">${e.office} ${empData.job_title?'· '+empData.job_title:''} · Reviewing as: ${reviewerName}</div>
   </div>
-
   <div class="card">
     <div class="card-title"><span>5</span> Competency insights</div>
-    <p style="font-size:12px;color:var(--gray);margin-bottom:14px">Rate the employee based on the demands of their present role. N/A = Not applicable, 1 = Needs improvement, 2 = Developing, 3 = Proficient, 4 = Excellent</p>
-    <div style="overflow-x:auto">
-    <table class="comp-table">
+    <p style="font-size:12px;color:var(--gray);margin-bottom:14px">N/A=Not applicable, 1=Needs improvement, 2=Developing, 3=Proficient, 4=Excellent</p>
+    <div style="overflow-x:auto"><table class="comp-table">
       <thead><tr><th>Core Competency</th><th>N/A</th><th>1</th><th>2</th><th>3</th><th>4</th></tr></thead>
-      <tbody>
-      ${COMPETENCIES.map((comp,i)=>{
-        const saved = r.competency_ratings && r.competency_ratings[comp] ? r.competency_ratings[comp] : '';
-        return `<tr><td>${comp}</td>${['na','1','2','3','4'].map(v=>`<td><input type="radio" name="comp${i}" value="${v}" ${saved===v?'checked':''}/></td>`).join('')}</tr>`;
-      }).join('')}
-      </tbody>
-    </table>
-    </div>
-    <div class="form-group" style="margin-top:1rem"><label class="form-label">Overall competency comments (optional)</label><textarea class="form-input" id="rv-compcomments" placeholder="Any comments on competencies...">${r.competency_comments||''}</textarea></div>
+      <tbody>${COMPETENCIES.map((comp,i)=>{const saved=r.competency_ratings&&r.competency_ratings[comp]?r.competency_ratings[comp]:'';return '<tr><td>'+comp+'</td>'+['na','1','2','3','4'].map(v=>'<td><input type="radio" name="comp'+i+'" value="'+v+'" '+(saved===v?'checked':'')+'"/></td>').join('')+'</tr>';}).join('')}</tbody>
+    </table></div>
+    <div class="form-group" style="margin-top:1rem"><label class="form-label">Overall comments (optional)</label><textarea class="form-input" id="rv-compcomments" placeholder="Any comments...">${r.competency_comments||''}</textarea></div>
   </div>
-
   <div class="card">
     <div class="card-title"><span>6</span> Reviewer comments</div>
-    <div class="form-group"><label class="form-label">Comments on overall performance</label><textarea class="form-input" id="rv-comments" placeholder="Your comments on this employee's overall performance...">${r.reviewer_comments||''}</textarea></div>
+    <div class="form-group"><label class="form-label">Comments on overall performance</label><textarea class="form-input" id="rv-comments" placeholder="Your comments...">${r.reviewer_comments||''}</textarea></div>
   </div>
-
   <div class="card">
     <div class="card-title"><span>7</span> Final performance potential matrix — 9 box</div>
-    <div id="nine-box-suggestion" style="display:none;margin-bottom:12px;padding:10px 14px;background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;font-size:13px">
-      <span style="font-weight:600;color:var(--blue)">💡 Suggested: </span><span id="nine-box-suggestion-text" style="color:var(--blue)"></span>
-      <span style="color:var(--gray);font-size:12px;margin-left:6px">— based on competency scores and comments. You can override by selecting any option below.</span>
-    </div>
-    <div class="nine-box-grid" id="nine-box-grid">
-      ${NINE_BOX.map(o=>`<div class="nine-box-cell${selectedNineBox===o.key?' selected':''}" id="nb-cell-${o.key.replace(/\s+/g,'-')}" onclick="selectNB('${o.key}',this)">
-        <div class="nb-label">${o.key}</div>
-        <div class="nb-sub">${o.sub}</div>
-      </div>`).join('')}
-    </div>
+    <div id="nine-box-suggestion" style="display:none;margin-bottom:12px;padding:10px 14px;background:var(--blue-light);border:1px solid var(--blue);border-radius:8px;font-size:13px"><span style="font-weight:600;color:var(--blue)">💡 Suggested: </span><span id="nine-box-suggestion-text" style="color:var(--blue)"></span><span style="color:var(--gray);font-size:12px;margin-left:6px">— you can override below.</span></div>
+    <div class="nine-box-grid" id="nine-box-grid">${NINE_BOX.map(o=>'<div class="nine-box-cell'+(selectedNineBox===o.key?' selected':'')+'" onclick="selectNB(\''+o.key+'\',this)"><div class="nb-label">'+o.key+'</div><div class="nb-sub">'+o.sub+'</div></div>').join('')}</div>
   </div>
-
   <div class="card">
     <div class="card-title">Reviewer signature</div>
     <div style="display:flex;gap:6px;margin-bottom:12px">
       <button type="button" id="rev-sig-tab-draw" onclick="switchSigTab('rev','draw')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer;border:1.5px solid var(--blue);background:var(--blue);color:white;font-weight:500">✏️ Draw</button>
       <button type="button" id="rev-sig-tab-upload" onclick="switchSigTab('rev','upload')" style="padding:6px 14px;border-radius:6px;font-size:13px;font-family:inherit;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--gray)">📎 Upload image</button>
     </div>
-    <div id="rev-sig-draw-area">
-      <p style="font-size:12px;color:var(--gray);margin-bottom:8px">Sign using your mouse or finger</p>
-      <canvas id="rev-sig-canvas" width="700" height="160" style="border:1.5px solid var(--border);border-radius:8px;cursor:crosshair;touch-action:none;width:100%;background:white;display:block"></canvas>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <button class="btn btn-secondary btn-sm" type="button" onclick="clearSig('rev-sig-canvas')">Clear</button>
-        <span style="font-size:12px;color:var(--gray);align-self:center">${r.reviewer_signature?'✓ Saved — draw again to update':'Draw your signature above'}</span>
-      </div>
-    </div>
-    <div id="rev-sig-upload-area" style="display:none">
-      <p style="font-size:12px;color:var(--gray);margin-bottom:8px">Upload an image of your signature (PNG, JPG)</p>
-      <input type="file" id="rev-sig-file" accept="image/*" onchange="previewSigUpload('rev')" style="font-size:13px;padding:8px;border:1.5px dashed var(--border);border-radius:8px;width:100%;cursor:pointer"/>
-      <div id="rev-sig-upload-preview" style="margin-top:10px;display:none">
-        <p style="font-size:11px;color:var(--gray);margin-bottom:4px">Preview:</p>
-        <img id="rev-sig-upload-img" style="max-height:80px;border:1px solid var(--border);border-radius:6px;background:white"/>
-      </div>
-    </div>
-    ${r.reviewer_signature?`<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Currently saved signature:</p><img src="${r.reviewer_signature}" style="border:1px solid var(--border);border-radius:6px;max-height:70px;background:white"/></div>`:''}
+    <div id="rev-sig-draw-area"><p style="font-size:12px;color:var(--gray);margin-bottom:8px">Sign using your mouse or finger</p><canvas id="rev-sig-canvas" width="700" height="160" style="border:1.5px solid var(--border);border-radius:8px;cursor:crosshair;touch-action:none;width:100%;background:white;display:block"></canvas><div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-secondary btn-sm" type="button" onclick="clearSig('rev-sig-canvas')">Clear</button><span style="font-size:12px;color:var(--gray);align-self:center">${r.reviewer_signature?'✓ Saved — draw again to update':'Draw your signature above'}</span></div></div>
+    <div id="rev-sig-upload-area" style="display:none"><p style="font-size:12px;color:var(--gray);margin-bottom:8px">Upload signature image (PNG, JPG)</p><input type="file" id="rev-sig-file" accept="image/*" onchange="previewSigUpload('rev')" style="font-size:13px;padding:8px;border:1.5px dashed var(--border);border-radius:8px;width:100%;cursor:pointer"/><div id="rev-sig-upload-preview" style="margin-top:10px;display:none"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Preview:</p><img id="rev-sig-upload-img" style="max-height:80px;border:1px solid var(--border);border-radius:6px;background:white"/></div></div>
+    ${r.reviewer_signature?'<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)"><p style="font-size:11px;color:var(--gray);margin-bottom:4px">Currently saved:</p><img src="'+r.reviewer_signature+'" style="border:1px solid var(--border);border-radius:6px;max-height:70px;background:white"/></div>':''}
   </div>
-
   <div class="btn-row">
-    <button class="btn btn-secondary" onclick="loadAdminDashboard();showScreen('screen-admin')">Cancel</button>
-    <button class="btn btn-primary" onclick="submitReviewerForm()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
-      Submit review
-    </button>
+    <button class="btn btn-secondary" onclick="if(isAdminSession){loadAdminDashboard();showScreen('screen-admin')}else{renderReviewerDash();showScreen('screen-reviewer-dash')}">Cancel</button>
+    <button class="btn btn-primary" onclick="submitReviewerForm()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg> Submit review</button>
   </div>`;
   setTimeout(()=>{ initSigPad('rev-sig-canvas'); autoSuggestNineBox(); }, 50);
-  // Re-suggest whenever competency radios or comments change
   document.querySelectorAll('input[type=radio]').forEach(r=>r.addEventListener('change', autoSuggestNineBox));
   document.getElementById('rv-comments') && document.getElementById('rv-comments').addEventListener('input', autoSuggestNineBox);
 }
 
-function selectNB(key, el) {
-  selectedNineBox = key;
-  // Clear all cells
-  document.querySelectorAll('.nine-box-cell').forEach(c=>{
-    const cellKey = c.querySelector('.nb-label').textContent.trim();
-    c.classList.remove('selected');
-    if (cellKey === suggestedNineBox && cellKey !== key) {
-      // Keep dashed hint on suggestion if not the one being selected
-      c.style.cssText = 'border:2px dashed var(--blue);background:transparent';
-    } else {
-      c.style.cssText = '';
-    }
-  });
-  // Mark selected
-  el.classList.add('selected');
-  el.style.cssText = 'border:2px solid var(--blue);background:var(--blue-light)';
-}
-
-// AUTO-SUGGEST 9-BOX
-let suggestedNineBox = null;
-function autoSuggestNineBox() {
-  const vals = COMPETENCIES.map((comp,i)=>{
-    const sel = document.querySelector(`input[name="comp${i}"]:checked`);
-    return sel && sel.value !== 'na' ? parseFloat(sel.value) : null;
-  }).filter(v=>v!==null);
-  if (!vals.length) return;
-  const avg = vals.reduce((a,b)=>a+b,0)/vals.length;
-
-  const comments = (document.getElementById('rv-comments')||{value:''}).value.toLowerCase();
-  const positiveWords = ['excellent','outstanding','exceptional','great','strong','impressive','above','exceeds','high','potential','grow','star','talented'];
-  const negativeWords = ['struggle','below','poor','weak','inconsistent','needs','improve','concern','challenge','underperform','low'];
-  const posCount = positiveWords.filter(w=>comments.includes(w)).length;
-  const negCount = negativeWords.filter(w=>comments.includes(w)).length;
-  const sentiment = posCount > negCount ? 'positive' : negCount > posCount ? 'negative' : 'neutral';
-
-  let perfLevel = avg >= 3.2 ? 'High' : avg >= 2.2 ? 'Medium' : 'Low';
-  if (sentiment === 'positive' && perfLevel === 'Medium') perfLevel = 'High';
-  if (sentiment === 'negative' && perfLevel === 'Medium') perfLevel = 'Low';
-
-  const highPotWords = ['potential','grow','future','leader','develop','promote','advance','progress','aspire'];
-  const lowPotWords = ['plateau','stagnant','resistant','reluctant','no growth'];
-  const highPotCount = highPotWords.filter(w=>comments.includes(w)).length;
-  const lowPotCount = lowPotWords.filter(w=>comments.includes(w)).length;
-  let potLevel = highPotCount > lowPotCount ? 'High' : lowPotCount > 0 ? 'Low' : avg >= 3.0 ? 'High' : avg >= 2.0 ? 'Medium' : 'Low';
-
-  const matrix = {
-    'High-High':'Star','High-Medium':'High Potential','High-Low':'Solid Potential',
-    'Medium-High':'High Performance','Medium-Medium':'Core Player','Medium-Low':'Average Performer',
-    'Low-High':'Performance Gem','Low-Medium':'Inconsistent Player','Low-Low':'Underachiever',
-  };
-  suggestedNineBox = matrix[`${potLevel}-${perfLevel}`] || 'Core Player';
-
-  // Update banner
-  const banner = document.getElementById('nine-box-suggestion');
-  const bannerText = document.getElementById('nine-box-suggestion-text');
-  if (banner && bannerText) { banner.style.display='block'; bannerText.textContent=suggestedNineBox; }
-
-  // Reset ALL cells first, then apply exactly one state each
-  document.querySelectorAll('.nine-box-cell').forEach(c=>{
-    const cellKey = c.querySelector('.nb-label').textContent.trim();
-    const isSelected = selectedNineBox && cellKey === selectedNineBox;
-    const isSuggested = cellKey === suggestedNineBox;
-
-    c.classList.toggle('selected', isSelected);
-    if (isSelected) {
-      // Manually selected — solid blue border, blue bg
-      c.style.cssText = 'border:2px solid var(--blue);background:var(--blue-light)';
-    } else if (isSuggested) {
-      // Suggested but not selected — dashed border only, no fill
-      c.style.cssText = 'border:2px dashed var(--blue);background:transparent';
-    } else {
-      c.style.cssText = '';
-    }
-  });
-
-  // Auto-select suggestion only if reviewer hasn't manually picked yet
-  if (!selectedNineBox) {
-    selectedNineBox = suggestedNineBox;
-    document.querySelectorAll('.nine-box-cell').forEach(c=>{
-      const cellKey = c.querySelector('.nb-label').textContent.trim();
-      if (cellKey === suggestedNineBox) {
-        c.classList.add('selected');
-        c.style.cssText = 'border:2px solid var(--blue);background:var(--blue-light)';
-      }
-    });
-  }
-}
-
-// SIGNATURE TABS
-function switchSigTab(prefix, tab) {
-  const drawArea = document.getElementById(`${prefix}-sig-draw-area`);
-  const uploadArea = document.getElementById(`${prefix}-sig-upload-area`);
-  const drawBtn = document.getElementById(`${prefix}-sig-tab-draw`);
-  const uploadBtn = document.getElementById(`${prefix}-sig-tab-upload`);
-  if (tab === 'draw') {
-    drawArea.style.display = 'block'; uploadArea.style.display = 'none';
-    drawBtn.style.background = 'var(--blue)'; drawBtn.style.color = 'white'; drawBtn.style.borderColor = 'var(--blue)';
-    uploadBtn.style.background = 'white'; uploadBtn.style.color = 'var(--gray)'; uploadBtn.style.borderColor = 'var(--border)';
-    setTimeout(()=>initSigPad(`${prefix}-sig-canvas`), 30);
-  } else {
-    drawArea.style.display = 'none'; uploadArea.style.display = 'block';
-    uploadBtn.style.background = 'var(--blue)'; uploadBtn.style.color = 'white'; uploadBtn.style.borderColor = 'var(--blue)';
-    drawBtn.style.background = 'white'; drawBtn.style.color = 'var(--gray)'; drawBtn.style.borderColor = 'var(--border)';
-  }
-}
-
-function previewSigUpload(prefix) {
-  const file = document.getElementById(`${prefix}-sig-file`).files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const preview = document.getElementById(`${prefix}-sig-upload-preview`);
-    const img = document.getElementById(`${prefix}-sig-upload-img`);
-    img.src = e.target.result;
-    preview.style.display = 'block';
-  };
-  reader.readAsDataURL(file);
-}
-
-function getSigData(canvasId) {
-  // Check for uploaded image first (from whichever prefix is active)
-  const prefix = canvasId.startsWith('emp') ? 'emp' : 'rev';
-  const uploadArea = document.getElementById(`${prefix}-sig-upload-area`);
-  if (uploadArea && uploadArea.style.display !== 'none') {
-    const img = document.getElementById(`${prefix}-sig-upload-img`);
-    if (img && img.src && img.src.startsWith('data:')) return img.src;
-    return null;
-  }
-  // Otherwise get from canvas drawing
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return null;
-  const ctx = canvas.getContext('2d');
-  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-  const hasDrawing = Array.from(pixels).some((v, i) => i % 4 === 3 && v > 0);
-  return hasDrawing ? canvas.toDataURL('image/png') : null;
-}
-
 async function submitReviewerForm() {
   const errors = [];
-
-  // All 13 competencies must be rated
   const ratings = {};
   COMPETENCIES.forEach((comp,i)=>{
-    const sel = document.querySelector(`input[name="comp${i}"]:checked`);
+    const sel = document.querySelector('input[name="comp'+i+'"]:checked');
     ratings[comp] = sel ? sel.value : '';
-    if (!sel) errors.push(`Competency: ${comp}`);
+    if (!sel) errors.push('Competency: '+comp);
   });
-  if (errors.length) {
-    toast(`Please rate all competencies. Missing: ${errors.slice(0,2).join(', ')}${errors.length>2?` (+${errors.length-2} more)`:''}`, 'error');
-    const table = document.querySelector('.comp-table');
-    if(table){ table.style.outline='2px solid var(--red)'; setTimeout(()=>table.style.outline='',3000); }
-    return;
-  }
-
-  // Reviewer comments required
+  if (errors.length) { toast('Please rate all competencies. Missing: '+errors.slice(0,2).join(', ')+(errors.length>2?' (+'+(errors.length-2)+' more)':''), 'error'); const table=document.querySelector('.comp-table'); if(table){table.style.outline='2px solid var(--red)';setTimeout(()=>table.style.outline='',3000);} return; }
   const revComments = document.getElementById('rv-comments');
-  if (!revComments.value.trim()) {
-    errors.push('Reviewer comments');
-    revComments.style.borderColor='var(--red)'; revComments.style.boxShadow='0 0 0 3px rgba(220,38,38,0.12)';
-    setTimeout(()=>{ revComments.style.borderColor=''; revComments.style.boxShadow=''; },3000);
-  }
-
-  // 9-box must be selected
+  if (!revComments.value.trim()) { errors.push('Reviewer comments'); revComments.style.borderColor='var(--red)'; revComments.style.boxShadow='0 0 0 3px rgba(220,38,38,0.12)'; setTimeout(()=>{revComments.style.borderColor='';revComments.style.boxShadow='';},3000); }
   if (!selectedNineBox) errors.push('9-box rating');
-
-  // Signature required
   const sigData = getSigData('rev-sig-canvas');
   const hasSavedSig = currentReview && currentReview.reviewer_signature;
-  if (!sigData && !hasSavedSig) {
-    errors.push('Reviewer signature');
-    const canvas = document.getElementById('rev-sig-canvas');
-    if(canvas){ canvas.style.borderColor='var(--red)'; setTimeout(()=>canvas.style.borderColor='var(--border)',3000); }
-  }
-
-  if (errors.length) {
-    toast(`Please complete: ${errors.slice(0,3).join(', ')}${errors.length>3?` (+${errors.length-3} more)`:''}`, 'error');
-    window.scrollTo({top:0,behavior:'smooth'});
-    return;
-  }
-
+  if (!sigData && !hasSavedSig) { errors.push('Reviewer signature'); const canvas=document.getElementById('rev-sig-canvas'); if(canvas){canvas.style.borderColor='var(--red)';setTimeout(()=>canvas.style.borderColor='var(--border)',3000);} }
+  if (errors.length) { toast('Please complete: '+errors.slice(0,3).join(', ')+(errors.length>3?' (+'+(errors.length-3)+' more)':''), 'error'); window.scrollTo({top:0,behavior:'smooth'}); return; }
+  const reviewerActualId = isAdminSession ? null : (currentReviewer ? currentReviewer.id : null);
   const payload = {
+    employee_id: currentEmployee.id,
+    reviewer_number: currentReviewerOrder,
+    reviewer_id_actual: reviewerActualId,
+    reviewer_name_actual: isAdminSession ? 'Admin' : (currentReviewer ? currentReviewer.name : ''),
     competency_ratings: ratings,
     competency_comments: document.getElementById('rv-compcomments').value,
     reviewer_comments: revComments.value,
@@ -1206,119 +1209,79 @@ async function submitReviewerForm() {
   if (sigData) payload.reviewer_signature = sigData;
   else if (currentReview && currentReview.reviewer_signature) payload.reviewer_signature = currentReview.reviewer_signature;
   try {
-    await sbPatch('reviews','?id=eq.'+currentReview.id, payload);
-    document.getElementById('success-title').textContent = 'Review submitted!';
-    document.getElementById('success-msg').textContent = `Review for ${currentEmployee.name} has been saved and is now visible in the HR dashboard.`;
-    showScreen('screen-success');
+    if (currentReview) { await sbPatch('reviews','?id=eq.'+currentReview.id, payload); }
+    else { await sbPost('reviews', payload); }
+    await loadAll();
+    toast('Review submitted for '+currentEmployee.name+'!','success');
+    if (isAdminSession) { loadAdminDashboard(); showScreen('screen-admin'); }
+    else { renderReviewerDash(); showScreen('screen-reviewer-dash'); }
   } catch(e) { toast('Error saving review: '+e.message,'error'); }
 }
+
 
 // VIEW DETAIL
 let currentViewEmpId = null;
 function viewReviewDetail(empId) {
   currentViewEmpId = empId;
   const emp = allEmployees.find(e=>e.id===empId);
-  const rev = allReviews.find(r=>r.employee_id===empId);
-  if (!emp || !rev) return;
+  if (!emp) return;
+  const selfEval = allReviews.find(r=>r.employee_id===empId&&(!r.reviewer_number||r.reviewer_number===1));
+  const reviewerRows = allReviews.filter(r=>r.employee_id===empId&&r.reviewer_number>=1&&r.reviewer_submitted).sort((a,b)=>a.reviewer_number-b.reviewer_number);
   document.getElementById('modal-title').textContent = emp.name;
-  document.getElementById('modal-sub').textContent = `${emp.office} · Review ${rev.review_year||'2026'}`;
+  document.getElementById('modal-sub').textContent = `${emp.office} · Review ${(selfEval||{}).review_year||'2026'}`;
   document.getElementById('btn-download-pdf').style.display = 'inline-flex';
   const dept = allDepartments.find(d=>d.id===emp.department_id);
   const labels = {na:'N/A',1:'1 – Needs improvement',2:'2 – Developing',3:'3 – Proficient',4:'4 – Excellent'};
   const cls = {na:'score-na',1:'score-1',2:'score-2',3:'score-3',4:'score-4'};
   let html = '';
+  const rev = selfEval || {};
 
-  if (rev.employee_submitted) {
-    // Employee details
-    html += `<div class="detail-section">
-      <div class="detail-section-title">Employee details</div>
-      ${[['Employee name',emp.name],['Employee ID',rev.emp_id_code],['Job title',rev.job_title],['Department',dept?dept.name:'—'],['Office / Location',emp.office],['Date of joining',rev.date_of_joining],['Reviewer name',rev.reviewer_name],['Date of review',rev.date_of_review]].map(([k,v])=>v?`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`:'').join('')}
+  if (selfEval && selfEval.employee_submitted) {
+    html += `<div class="detail-section"><div class="detail-section-title">Employee details</div>
+      ${[['Employee name',emp.name],['Employee ID',emp.emp_code||rev.emp_id_code],['Job title',rev.job_title],['Department',dept?dept.name:'—'],['Office',emp.office],['Date of joining',rev.date_of_joining],['Reviewer',rev.reviewer_name],['Date of review',rev.date_of_review]].map(([k,v])=>v?`<div class="detail-row"><span class="detail-key">${k}</span><span class="detail-val">${v}</span></div>`:'').join('')}
+    </div>
+    <div class="detail-section"><div class="detail-section-title">Section 1 — Employee self evaluation</div>
+      ${[['A. Main duties',rev.q_duties],['B. Performs well in',rev.q_perform_well],['C. Most challenging',rev.q_challenging],['D. Efficiency & problem solving',rev.q_efficiency],['E. FOCAL acknowledgement',rev.q_acknowledgement]].map(([k,v])=>v?`<div class="detail-row" style="flex-direction:column;gap:4px"><span class="detail-key" style="font-weight:500">${k}</span><span class="detail-val" style="line-height:1.6;white-space:pre-wrap">${v}</span></div>`:'').join('')}
     </div>`;
-
-    // Self evaluation
-    html += `<div class="detail-section">
-      <div class="detail-section-title">Section 1 — Employee self evaluation</div>
-      ${[
-        ['A. Main duties & responsibilities', rev.q_duties],
-        ['B. Areas performing well', rev.q_perform_well],
-        ['C. Most challenging aspects', rev.q_challenging],
-        ['D. Efficiency & problem solving', rev.q_efficiency],
-        ['E. FOCAL acknowledgement', rev.q_acknowledgement],
-      ].map(([k,v])=>v?`<div class="detail-row" style="flex-direction:column;gap:4px"><span class="detail-key" style="font-weight:500">${k}</span><span class="detail-val" style="line-height:1.6;white-space:pre-wrap">${v}</span></div>`:'').join('')}
-    </div>`;
-
-    // Achievements
-    if (rev.achievements && rev.achievements.some(a=>a.objective||a.feedback)) {
-      html += `<div class="detail-section"><div class="detail-section-title">Section 2 — Past achievements & learnings</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Achievement / Objective</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Notes</th></tr></thead>
-          <tbody>${rev.achievements.filter(a=>a.objective||a.feedback).map(a=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5">${a.objective||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5;color:var(--gray)">${a.feedback||'—'}</td></tr>`).join('')}</tbody>
-        </table></div>`;
+    if (rev.achievements&&rev.achievements.some(a=>a.objective)) {
+      html += `<div class="detail-section"><div class="detail-section-title">Section 2 — Past achievements</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">Achievement</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">Notes</th></tr></thead><tbody>
+        ${rev.achievements.filter(a=>a.objective).map(a=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${a.objective}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--gray)">${a.feedback||'—'}</td></tr>`).join('')}</tbody></table></div>`;
     }
-
-    // Milestones
-    if (rev.milestones && rev.milestones.some(m=>m.goal)) {
-      html += `<div class="detail-section"><div class="detail-section-title">Section 3 — Next milestones & key focus areas</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border);width:40%">Objective / Goal</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border);width:20%">Timeline</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Success criteria</th></tr></thead>
-          <tbody>${rev.milestones.filter(m=>m.goal).map(m=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${m.goal}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--gray)">${m.timeline||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${m.criteria||'—'}</td></tr>`).join('')}</tbody>
-        </table></div>`;
+    if (rev.milestones&&rev.milestones.some(m=>m.goal)) {
+      html += `<div class="detail-section"><div class="detail-section-title">Section 3 — Next milestones</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border);width:40%">Goal</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border);width:20%">Timeline</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">Criteria</th></tr></thead><tbody>
+        ${rev.milestones.filter(m=>m.goal).map(m=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border)">${m.goal}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--gray)">${m.timeline||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border)">${m.criteria||'—'}</td></tr>`).join('')}</tbody></table></div>`;
     }
-
-    // Development plan
-    if (rev.development_plan && rev.development_plan.some(d=>d.need)) {
+    if (rev.development_plan&&rev.development_plan.some(d=>d.need)) {
       html += `<div class="detail-section"><div class="detail-section-title">Section 4 — Personal development plan</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Development need</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Area</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Action required</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border)">Target date</th></tr></thead>
-          <tbody>${rev.development_plan.filter(d=>d.need).map(d=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${d.need}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--gray)">${d.area||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top">${d.action||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--gray)">${d.date||'—'}</td></tr>`).join('')}</tbody>
-        </table></div>`;
+        <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">Need</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">Area</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">Action</th><th style="text-align:left;padding:8px 10px;background:var(--gray-light);font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">Date</th></tr></thead><tbody>
+        ${rev.development_plan.filter(d=>d.need).map(d=>`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border)">${d.need}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--gray)">${d.area||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border)">${d.action||'—'}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border);color:var(--gray)">${d.date||'—'}</td></tr>`).join('')}</tbody></table></div>`;
     }
-
-    // Employee comments
-    if (rev.employee_comments) {
-      html += `<div class="detail-section"><div class="detail-section-title">Employee comments</div>
-        <div style="font-size:13px;line-height:1.7;white-space:pre-wrap;padding:10px;background:var(--gray-light);border-radius:6px">${rev.employee_comments}</div></div>`;
-    }
+    if (rev.employee_comments) html += `<div class="detail-section"><div class="detail-section-title">Employee comments</div><div style="font-size:13px;line-height:1.7;white-space:pre-wrap;padding:10px;background:var(--gray-light);border-radius:6px">${rev.employee_comments}</div></div>`;
   }
 
-  if (rev.reviewer_submitted) {
-    // Competency ratings
-    html += `<div class="detail-section">
-      <div class="detail-section-title">Section 5 — Competency insights</div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr><th style="text-align:left;padding:8px 10px;background:var(--blue);color:white;font-size:11px;font-weight:600;letter-spacing:0.04em">Competency</th><th style="text-align:left;padding:8px 10px;background:var(--blue);color:white;font-size:11px;font-weight:600;letter-spacing:0.04em">Rating</th></tr></thead>
-        <tbody>${COMPETENCIES.map(comp=>{
-          const val = rev.competency_ratings && rev.competency_ratings[comp];
-          return val?`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border)">${comp}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border)"><span class="comp-score-badge ${cls[val]||''}">${labels[val]||val}</span></td></tr>`:'';
-        }).join('')}</tbody>
-      </table>
-      ${rev.competency_comments?`<div style="margin-top:10px;font-size:13px;color:var(--gray);padding:10px;background:var(--gray-light);border-radius:6px;line-height:1.6">${rev.competency_comments}</div>`:''}
+  // Show each reviewer's section
+  reviewerRows.forEach((rr,idx)=>{
+    const orderLabel = rr.reviewer_number===1?'Reviewer 1':rr.reviewer_number===2?'Reviewer 2':'Reviewer 3';
+    html += `<div class="detail-section" style="border-top:2px solid var(--blue-light);margin-top:1rem;padding-top:1rem">
+      <div class="detail-section-title">Section 5–7 — ${orderLabel}${rr.reviewer_name_actual?' ('+rr.reviewer_name_actual+')':''}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th style="text-align:left;padding:8px 10px;background:var(--blue);color:white;font-size:11px">Competency</th><th style="text-align:left;padding:8px 10px;background:var(--blue);color:white;font-size:11px">Rating</th></tr></thead><tbody>
+      ${COMPETENCIES.map(comp=>{const val=rr.competency_ratings&&rr.competency_ratings[comp];return val?`<tr><td style="padding:8px 10px;border-bottom:1px solid var(--border)">${comp}</td><td style="padding:8px 10px;border-bottom:1px solid var(--border)"><span class="comp-score-badge ${cls[val]||''}">${labels[val]||val}</span></td></tr>`:''}).join('')}
+      </tbody></table>
+      ${rr.competency_comments?`<div style="margin-top:8px;font-size:13px;color:var(--gray);padding:10px;background:var(--gray-light);border-radius:6px">${rr.competency_comments}</div>`:''}
+      ${rr.reviewer_comments?`<div style="margin-top:10px"><strong style="font-size:12px">Reviewer comments:</strong><div style="font-size:13px;line-height:1.6;white-space:pre-wrap;padding:10px;background:var(--gray-light);border-radius:6px;margin-top:4px">${rr.reviewer_comments}</div></div>`:''}
+      ${rr.nine_box_rating?`<div class="detail-row" style="margin-top:10px"><span class="detail-key">9-box rating</span><span class="detail-val"><strong style="font-size:15px">${rr.nine_box_rating}</strong><br><span style="font-size:12px;color:var(--gray)">${(NINE_BOX.find(n=>n.key===rr.nine_box_rating)||{}).sub||''}</span></span></div>`:''}
     </div>`;
+  });
 
-    // Reviewer comments & 9-box
-    html += `<div class="detail-section">
-      <div class="detail-section-title">Section 6 & 7 — Reviewer assessment</div>
-      ${rev.reviewer_comments?`<div class="detail-row" style="flex-direction:column;gap:4px"><span class="detail-key" style="font-weight:500">Reviewer comments</span><span class="detail-val" style="line-height:1.6;white-space:pre-wrap;padding:10px;background:var(--gray-light);border-radius:6px">${rev.reviewer_comments}</span></div>`:''}
-      ${rev.nine_box_rating?`<div class="detail-row" style="margin-top:10px"><span class="detail-key">9-box rating</span><span class="detail-val"><strong style="font-size:15px">${rev.nine_box_rating}</strong><br><span style="font-size:12px;color:var(--gray)">${(NINE_BOX.find(n=>n.key===rev.nine_box_rating)||{}).sub||''}</span></span></div>`:''}
-    </div>`;
-  }
-
-  document.getElementById('modal-body').innerHTML = html || '<p style="color:var(--gray);font-size:14px">No data submitted yet.</p>';
+  if (!selfEval && !reviewerRows.length) html = '<p style="color:var(--gray);font-size:14px">No data submitted yet.</p>';
+  document.getElementById('modal-body').innerHTML = html;
   document.getElementById('detail-modal').style.display='flex';
 }
 
-function downloadPDF() {
-  const empId = currentViewEmpId;
-  const emp = allEmployees.find(e=>e.id===empId);
-  const rev = allReviews.find(r=>r.employee_id===empId);
-  if (!emp || !rev) return;
-  const dept = allDepartments.find(d=>d.id===emp.department_id);
-  const labels = {na:'N/A','1':'1 – Needs improvement','2':'2 – Developing','3':'3 – Proficient','4':'4 – Excellent'};
-
-  const win = window.open('','_blank');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/>
-  <title>Performance Review — ${emp.name}</title>
-  <style>
+function pdfStyles() {
+  return `
     body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;font-size:13px;line-height:1.6;padding:40px;max-width:800px;margin:0 auto}
     .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;padding-bottom:20px;border-bottom:2px solid #1251a3}
     .logo{background:#1251a3;color:white;font-weight:700;font-size:18px;padding:8px 14px;border-radius:6px;letter-spacing:1px}
@@ -1345,7 +1308,14 @@ function downloadPDF() {
     .sig-line{margin-top:40px;display:flex;justify-content:space-between;gap:40px}
     .sig-block{flex:1;border-top:1px solid #111;padding-top:8px;font-size:12px}
     @media print{body{padding:20px}}
-  </style></head><body>
+  `;
+}
+
+function buildReviewHTML(emp, selfEval, reviewerRows) {
+  const dept = allDepartments.find(d=>d.id===emp.department_id);
+  const labels = {na:'N/A','1':'1 – Needs improvement','2':'2 – Developing','3':'3 – Proficient','4':'4 – Excellent'};
+  const rev = selfEval || {};
+  let html = `
   <div class="header">
     <div>
       <img src="https://raw.githubusercontent.com/pnfocal-ship-it/focal-performance-review/main/focalgroup_logo.jpg" alt="Focal" style="height:48px;width:auto;border-radius:4px" onerror="this.outerHTML='<div class=\\'logo\\'>Focal</div>'"/>
@@ -1357,68 +1327,59 @@ function downloadPDF() {
       <div>Generated: ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</div>
     </div>
   </div>
-
   <h1>${emp.name}</h1>
   <div class="info-grid">
-    ${[['Employee ID',rev.emp_id_code],['Job title',rev.job_title],['Department',dept?dept.name:'—'],['Office',emp.office],['Date of joining',rev.date_of_joining],['Reviewer',rev.reviewer_name],['Date of review',rev.date_of_review]].map(([k,v])=>v?`<div class="info-item"><div class="info-label">${k}</div><div class="info-val">${v}</div></div>`:'').join('')}
-  </div>
+    ${[['Employee ID',emp.emp_code||rev.emp_id_code],['Job title',rev.job_title],['Department',dept?dept.name:'—'],['Office',emp.office],['Date of joining',rev.date_of_joining],['Reviewer',rev.reviewer_name],['Date of review',rev.date_of_review]].map(([k,v])=>v?`<div class="info-item"><div class="info-label">${k}</div><div class="info-val">${v}</div></div>`:'').join('')}
+  </div>`;
 
-  ${rev.employee_submitted?`
-  <h2>Section 1 — Employee Self Evaluation</h2>
-  ${[['A. Main duties & responsibilities',rev.q_duties],['B. Areas performing well',rev.q_perform_well],['C. Most challenging aspects',rev.q_challenging],['D. Efficiency & problem solving',rev.q_efficiency],['E. FOCAL acknowledgement',rev.q_acknowledgement]].map(([k,v])=>v?`<div class="q-block"><div class="q-label">${k}</div><div class="q-val">${v}</div></div>`:'').join('')}
+  if (selfEval && selfEval.employee_submitted) {
+    html += `
+    <h2>Section 1 — Employee Self Evaluation</h2>
+    ${[['A. Main duties & responsibilities',rev.q_duties],['B. Areas performing well',rev.q_perform_well],['C. Most challenging aspects',rev.q_challenging],['D. Efficiency & problem solving',rev.q_efficiency],['E. FOCAL acknowledgement',rev.q_acknowledgement]].map(([k,v])=>v?`<div class="q-block"><div class="q-label">${k}</div><div class="q-val">${v}</div></div>`:'').join('')}
+    ${rev.achievements&&rev.achievements.some(a=>a.objective)?`<h2>Section 2 — Past Achievements</h2><table><thead><tr><th style="width:50%">Achievement</th><th>Notes</th></tr></thead><tbody>${rev.achievements.filter(a=>a.objective).map(a=>`<tr><td>${a.objective}</td><td>${a.feedback||'—'}</td></tr>`).join('')}</tbody></table>`:''}
+    ${rev.milestones&&rev.milestones.some(m=>m.goal)?`<h2>Section 3 — Next Milestones</h2><table><thead><tr><th style="width:40%">Goal</th><th style="width:20%">Timeline</th><th>Criteria</th></tr></thead><tbody>${rev.milestones.filter(m=>m.goal).map(m=>`<tr><td>${m.goal}</td><td>${m.timeline||'—'}</td><td>${m.criteria||'—'}</td></tr>`).join('')}</tbody></table>`:''}
+    ${rev.development_plan&&rev.development_plan.some(d=>d.need)?`<h2>Section 4 — Personal Development Plan</h2><table><thead><tr><th>Need</th><th>Area</th><th>Action</th><th>Date</th></tr></thead><tbody>${rev.development_plan.filter(d=>d.need).map(d=>`<tr><td>${d.need}</td><td>${d.area||'—'}</td><td>${d.action||'—'}</td><td>${d.date||'—'}</td></tr>`).join('')}</tbody></table>`:''}
+    ${rev.employee_comments?`<h2>Employee Comments</h2><div class="comment-box">${rev.employee_comments}</div>`:''}
+    <div class="sig-line" style="margin-top:30px">
+      <div class="sig-block">
+        ${rev.employee_signature?`<img src="${rev.employee_signature}" style="height:60px;display:block;margin-bottom:6px"/>`:'<div style="height:60px"></div>'}
+        <div style="border-top:1px solid #111;padding-top:8px;font-size:12px">Sign of Employee<br><span style="color:#888">${emp.name}</span></div>
+      </div>
+    </div>`;
+  }
 
-  ${rev.achievements&&rev.achievements.some(a=>a.objective)?`
-  <h2>Section 2 — Past Achievements & Learnings</h2>
-  <table><thead><tr><th style="width:50%">Achievement / Objective</th><th>Notes</th></tr></thead><tbody>
-  ${rev.achievements.filter(a=>a.objective).map(a=>`<tr><td>${a.objective}</td><td>${a.feedback||'—'}</td></tr>`).join('')}
-  </tbody></table>`:''}
+  if (reviewerRows && reviewerRows.length) {
+    reviewerRows.forEach(rr=>{
+      const orderLabel = rr.reviewer_number===1?'Reviewer 1':rr.reviewer_number===2?'Reviewer 2':'Reviewer 3';
+      html += `
+      <h2 style="margin-top:30px">Sections 5–7 — ${orderLabel}${rr.reviewer_name_actual?' ('+rr.reviewer_name_actual+')':''}</h2>
+      <table><thead><tr><th style="width:60%">Core Competency</th><th>Rating</th></tr></thead><tbody>
+      ${COMPETENCIES.map(comp=>{const val=rr.competency_ratings&&rr.competency_ratings[comp];return val?`<tr><td>${comp}</td><td><span class="badge score-${val}">${labels[val]||val}</span></td></tr>`:''}).join('')}
+      </tbody></table>
+      ${rr.competency_comments?`<div class="comment-box" style="margin-bottom:16px">${rr.competency_comments}</div>`:''}
+      ${rr.reviewer_comments?`<h2>Reviewer Comments</h2><div class="comment-box">${rr.reviewer_comments}</div>`:''}
+      ${rr.nine_box_rating?`<h2>Final Performance Potential (9-box)</h2><div class="nine-box">${rr.nine_box_rating}</div><div class="nine-sub">${(NINE_BOX.find(n=>n.key===rr.nine_box_rating)||{}).sub||''}</div>`:''}
+      <div class="sig-line" style="margin-top:30px">
+        <div class="sig-block">
+          ${rr.reviewer_signature?`<img src="${rr.reviewer_signature}" style="height:60px;display:block;margin-bottom:6px"/>`:'<div style="height:60px"></div>'}
+          <div style="border-top:1px solid #111;padding-top:8px;font-size:12px">Sign of ${orderLabel}<br><span style="color:#888">${rr.reviewer_name_actual||'_____________'}</span></div>
+        </div>
+      </div>`;
+    });
+  }
 
-  ${rev.milestones&&rev.milestones.some(m=>m.goal)?`
-  <h2>Section 3 — Next Milestones & Key Focus Areas</h2>
-  <table><thead><tr><th style="width:40%">Objective / Goal</th><th style="width:20%">Timeline</th><th>Success Criteria</th></tr></thead><tbody>
-  ${rev.milestones.filter(m=>m.goal).map(m=>`<tr><td>${m.goal}</td><td>${m.timeline||'—'}</td><td>${m.criteria||'—'}</td></tr>`).join('')}
-  </tbody></table>`:''}
+  html += `<div class="footer"><div>Focal Middle East — Performance Development Review</div><div>Confidential</div></div>`;
+  return html;
+}
 
-  ${rev.development_plan&&rev.development_plan.some(d=>d.need)?`
-  <h2>Section 4 — Personal Development Plan</h2>
-  <table><thead><tr><th>Development Need</th><th>Area</th><th>Action Required</th><th>Target Date</th></tr></thead><tbody>
-  ${rev.development_plan.filter(d=>d.need).map(d=>`<tr><td>${d.need}</td><td>${d.area||'—'}</td><td>${d.action||'—'}</td><td>${d.date||'—'}</td></tr>`).join('')}
-  </tbody></table>`:''}
-
-  ${rev.employee_comments?`<h2>Employee Comments</h2><div class="comment-box">${rev.employee_comments}</div>`:''}
-  `:''}
-
-  ${rev.reviewer_submitted?`
-  <h2>Section 5 — Competency Insights</h2>
-  <table><thead><tr><th style="width:60%">Core Competency</th><th>Rating</th></tr></thead><tbody>
-  ${COMPETENCIES.map(comp=>{const val=rev.competency_ratings&&rev.competency_ratings[comp];return val?`<tr><td>${comp}</td><td><span class="badge score-${val}">${labels[val]||val}</span></td></tr>`:''}).join('')}
-  </tbody></table>
-  ${rev.competency_comments?`<div class="comment-box" style="margin-bottom:16px">${rev.competency_comments}</div>`:''}
-
-  ${rev.reviewer_comments?`<h2>Section 6 — Reviewer Comments</h2><div class="comment-box">${rev.reviewer_comments}</div>`:''}
-
-  ${rev.nine_box_rating?`<h2>Section 7 — Final Performance Potential (9-box)</h2>
-  <div class="nine-box">${rev.nine_box_rating}</div>
-  <div class="nine-sub">${(NINE_BOX.find(n=>n.key===rev.nine_box_rating)||{}).sub||''}</div>`:''}
-
-  <div class="sig-line" style="margin-top:50px">
-    <div class="sig-block">
-      ${rev.employee_signature?`<img src="${rev.employee_signature}" style="height:60px;display:block;margin-bottom:6px"/>`:'<div style="height:60px"></div>'}
-      <div style="border-top:1px solid #111;padding-top:8px;font-size:12px">Sign of Employee<br><span style="color:#888">${emp.name}</span></div>
-    </div>
-    <div class="sig-block">
-      ${rev.reviewer_signature?`<img src="${rev.reviewer_signature}" style="height:60px;display:block;margin-bottom:6px"/>`:'<div style="height:60px"></div>'}
-      <div style="border-top:1px solid #111;padding-top:8px;font-size:12px">Sign of Reviewer<br><span style="color:#888">${rev.reviewer_name||'_____________'}</span></div>
-    </div>
-  </div>
-  `:''}
-
-  <div class="footer">
-    <div>Focal Middle East — Performance Development Review</div>
-    <div>Confidential</div>
-  </div>
-  <script>window.onload=()=>window.print()<\/script>
-  </body></html>`);
+function downloadPDF() {
+  const empId = currentViewEmpId;
+  const emp = allEmployees.find(e=>e.id===empId);
+  if (!emp) return;
+  const selfEval = allReviews.find(r=>r.employee_id===empId&&(!r.reviewer_number||r.reviewer_number===1));
+  const reviewerRows = allReviews.filter(r=>r.employee_id===empId&&r.reviewer_number>=1&&r.reviewer_submitted).sort((a,b)=>a.reviewer_number-b.reviewer_number);
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Performance Review — ${emp.name}</title><style>${pdfStyles()}</style></head><body>${buildReviewHTML(emp, selfEval, reviewerRows)}<script>window.onload=()=>window.print()<\/script></body></html>`);
   win.document.close();
 }
 
@@ -1435,12 +1396,13 @@ function renderEmpManageList() {
         return `<div class="manage-item" id="emp-row-${e.id}">
           <div class="avatar" style="width:30px;height:30px;font-size:11px">${initials(e.name)}</div>
           <div class="manage-item-info" style="flex:1;min-width:0">
-            <div id="emp-display-${e.id}" style="display:flex;align-items:center;gap:6px">
+            <div id="emp-display-${e.id}" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               <div class="manage-item-name">${e.name}</div>
-              <div class="manage-item-sub">#${String(e.emp_number||'').padStart(2,'0')}</div>
+              <div class="manage-item-sub" style="font-family:'DM Mono',monospace;background:var(--gray-light);padding:1px 6px;border-radius:4px">${e.emp_code||'No ID'}</div>
             </div>
-            <div id="emp-edit-${e.id}" style="display:none;align-items:center;gap:6px">
-              <input id="emp-name-input-${e.id}" value="${e.name}" style="font-size:13px;padding:4px 8px;border:1px solid var(--blue);border-radius:6px;font-family:inherit;color:var(--dark);width:200px" onkeydown="if(event.key==='Enter')saveEmpName('${e.id}');if(event.key==='Escape')cancelEmpEdit('${e.id}')"/>
+            <div id="emp-edit-${e.id}" style="display:none;align-items:center;gap:6px;flex-wrap:wrap">
+              <input id="emp-name-input-${e.id}" value="${e.name}" style="font-size:13px;padding:4px 8px;border:1px solid var(--blue);border-radius:6px;font-family:inherit;color:var(--dark);width:170px" placeholder="Name" onkeydown="if(event.key==='Enter')saveEmpName('${e.id}');if(event.key==='Escape')cancelEmpEdit('${e.id}')"/>
+              <input id="emp-code-input-${e.id}" value="${e.emp_code||''}" style="font-size:13px;padding:4px 8px;border:1px solid var(--blue);border-radius:6px;font-family:'DM Mono',monospace;color:var(--dark);width:100px" placeholder="ID e.g. DXB-001" onkeydown="if(event.key==='Enter')saveEmpName('${e.id}');if(event.key==='Escape')cancelEmpEdit('${e.id}')"/>
               <button class="btn btn-primary btn-sm" onclick="saveEmpName('${e.id}')">Save</button>
               <button class="btn btn-secondary btn-sm" onclick="cancelEmpEdit('${e.id}')">Cancel</button>
             </div>
@@ -1471,10 +1433,15 @@ function cancelEmpEdit(id) {
 
 async function saveEmpName(id) {
   const newName = document.getElementById('emp-name-input-'+id).value.trim();
+  const newCode = document.getElementById('emp-code-input-'+id).value.trim().toUpperCase();
   if (!newName) { toast('Name cannot be empty','error'); return; }
+  if (!newCode) { toast('Employee ID cannot be empty','error'); return; }
+  // Check code uniqueness
+  const duplicate = allEmployees.find(e=>e.id!==id && (e.emp_code||'').toUpperCase()===newCode);
+  if (duplicate) { toast(`ID ${newCode} is already used by ${duplicate.name}`,'error'); return; }
   try {
-    await sbPatch('employees','?id=eq.'+id,{name: newName});
-    toast('Name updated!','success');
+    await sbPatch('employees','?id=eq.'+id,{name: newName, emp_code: newCode});
+    toast('Employee updated!','success');
     await loadAdminDashboard();
   } catch(e) { toast('Error: '+e.message,'error'); }
 }
@@ -1485,9 +1452,11 @@ async function addEmployee() {
   const dept = document.getElementById('add-emp-dept').value;
   if (!name) { toast('Please enter a name','error'); return; }
   const maxNum = allEmployees.filter(e=>e.office===office).reduce((m,e)=>Math.max(m,e.emp_number||0),0);
+  const prefix = office==='Dubai'?'DXB':office==='India'?'IND':'SL';
+  const newCode = `${prefix}-${String(maxNum+1).padStart(3,'0')}`;
   try {
-    await sbPost('employees',{name, office, department_id: dept||null, emp_number: maxNum+1, active:true});
-    toast('Employee added!','success');
+    await sbPost('employees',{name, office, department_id: dept||null, emp_number: maxNum+1, emp_code: newCode, active:true});
+    toast(`Employee added! Their ID is ${newCode}`,'success');
     document.getElementById('add-emp-name').value='';
     await loadAdminDashboard();
   } catch(e) { toast('Error: '+e.message,'error'); }
@@ -1555,6 +1524,91 @@ function updateDeptDropdown() {
   const office = document.getElementById('add-emp-office').value;
   const depts = allDepartments.filter(d=>d.office===office);
   document.getElementById('add-emp-dept').innerHTML = '<option value="">— No department —</option>' + depts.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+}
+
+// REVIEWER ASSIGNMENTS (admin)
+function renderAssignments() {
+  // Populate dropdowns
+  const revSel = document.getElementById('assign-reviewer-select');
+  const empSel = document.getElementById('assign-employee-select');
+  const opts = allEmployees.map(e=>`<option value="${e.id}">${e.name} (${e.office})</option>`).join('');
+  revSel.innerHTML = '<option value="">Select reviewer...</option>' + opts;
+  empSel.innerHTML = '<option value="">Select employee...</option>' + opts;
+
+  // Group assignments by reviewer
+  const list = document.getElementById('assignments-list');
+  const reviewerIds = [...new Set(allAssignments.map(a=>a.reviewer_id))];
+  if (!reviewerIds.length) {
+    list.innerHTML = '<div class="card"><p style="font-size:13px;color:var(--gray)">No assignments yet. Add one above to enable reviewer logins.</p></div>';
+    return;
+  }
+  list.innerHTML = reviewerIds.map(rid=>{
+    const reviewer = allEmployees.find(e=>e.id===rid);
+    if (!reviewer) return '';
+    const assigns = allAssignments.filter(a=>a.reviewer_id===rid);
+    return `<div class="card">
+      <div class="card-title">${reviewer.name} <span style="background:var(--blue-light);color:var(--blue);font-size:11px;padding:2px 8px;border-radius:20px;margin-left:4px">${reviewer.office}</span> <span style="background:var(--gray-light);color:var(--gray);font-size:11px;padding:2px 8px;border-radius:20px">reviews ${assigns.length}</span></div>
+      <div class="manage-list">${assigns.map(a=>{
+        const emp = allEmployees.find(e=>e.id===a.employee_id);
+        if (!emp) return '';
+        const dept = allDepartments.find(d=>d.id===emp.department_id);
+        return `<div class="manage-item">
+          <div class="avatar" style="width:30px;height:30px;font-size:11px">${initials(emp.name)}</div>
+          <div class="manage-item-info">
+            <div class="manage-item-name">${emp.name}</div>
+            <div class="manage-item-sub">${emp.office}${dept?' · '+dept.name:''}</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="removeAssignment('${a.id}','${emp.name}','${reviewer.name}')">Remove</button>
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+async function addAssignment() {
+  const reviewerId = document.getElementById('assign-reviewer-select').value;
+  const employeeId = document.getElementById('assign-employee-select').value;
+  if (!reviewerId || !employeeId) { toast('Select both a reviewer and an employee','error'); return; }
+  if (reviewerId === employeeId) { toast('Someone cannot review themselves','error'); return; }
+  if (allAssignments.some(a=>a.reviewer_id===reviewerId && a.employee_id===employeeId)) { toast('This assignment already exists','error'); return; }
+  try {
+    await sbPost('reviewer_assignments',{reviewer_id: reviewerId, employee_id: employeeId});
+    toast('Assignment added!','success');
+    await loadAll();
+    renderAssignments();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+async function removeAssignment(id, empName, revName) {
+  if (!confirm(`Remove assignment: ${revName} reviews ${empName}?`)) return;
+  try {
+    await sbDelete('reviewer_assignments','?id=eq.'+id);
+    toast('Assignment removed','');
+    await loadAll();
+    renderAssignments();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+// BULK PDF DOWNLOAD
+function bulkDownloadPDF() {
+  const filter = document.getElementById('review-office-filter').value;
+  let emps = filter ? allEmployees.filter(e=>e.office===filter) : allEmployees;
+  const completed = emps.filter(e=>{
+    const rev = allReviews.find(r=>r.employee_id===e.id);
+    return rev && rev.employee_submitted;
+  });
+  if (!completed.length) { toast('No completed forms to download','error'); return; }
+  // Build one combined document with page breaks
+  let pagesHtml = '';
+  completed.forEach(emp=>{
+    const selfEval = allReviews.find(r=>r.employee_id===emp.id&&(!r.reviewer_number||r.reviewer_number===1));
+    const reviewerRows = allReviews.filter(r=>r.employee_id===emp.id&&r.reviewer_number>=1&&r.reviewer_submitted).sort((a,b)=>a.reviewer_number-b.reviewer_number);
+    pagesHtml += `<div style="page-break-after:always">${buildReviewHTML(emp, selfEval, reviewerRows)}</div>`;
+  });
+  const win = window.open('','_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"/><title>Focal Performance Reviews — ${filter||'All offices'}</title>
+  <style>${pdfStyles()}</style></head><body>${pagesHtml}<script>window.onload=()=>window.print()<\/script></body></html>`);
+  win.document.close();
 }
 
 function switchAdminTab(tab, btn) {
@@ -1701,8 +1755,194 @@ function renderLeaderboard() {
   document.getElementById('leaderboard-body').innerHTML = html;
 }
 
+// ADMINS and REVIEWERS by name
+const ADMIN_NAMES = ['james esau','louise collins','dyane alcain','nidhina jamal'];
+const REVIEWER_NAMES = ['laura morgan','melon nadeeshana','anju f. hewage','amila f. hewage','hashan t. dharmawardana','vinod kumar','mohammed basheer','sameer venugopal','deepak nambiar'];
+
+let selectedHomePerson = null;
+
+function resetHome() {
+  selectedHomePerson = null;
+  const inp = document.getElementById('home-name-input'); if(inp) inp.value='';
+  const sug = document.getElementById('home-name-suggestions'); if(sug){sug.innerHTML='';sug.style.display='none';}
+  const rs = document.getElementById('home-role-select'); if(rs) rs.style.display='none';
+  const na = document.getElementById('home-no-access'); if(na) na.style.display='none';
+  const rv = document.getElementById('reviewer-code-input'); if(rv) rv.value='';
+  const rp = document.getElementById('reviewer-pw-input'); if(rp) rp.value='';
+}
+
+function onHomeNameInput() {
+  const val = document.getElementById('home-name-input').value.trim().toLowerCase();
+  const sugDiv = document.getElementById('home-name-suggestions');
+  const roleDiv = document.getElementById('home-role-select');
+  roleDiv.style.display='none'; selectedHomePerson=null;
+  if (val.length < 2) { sugDiv.style.display='none'; sugDiv.innerHTML=''; return; }
+  const matches = allEmployees.filter(e=>e.name.toLowerCase().includes(val));
+  if (!matches.length) { sugDiv.style.display='none'; return; }
+  sugDiv.innerHTML = matches.slice(0,8).map(e=>`
+    <div onclick="selectHomePerson('${e.id}')" style="padding:10px 14px;cursor:pointer;font-size:14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center" onmouseover="this.style.background='var(--blue-light)'" onmouseout="this.style.background=''">
+      <span>${e.name}</span><span style="font-size:11px;color:var(--gray)">${e.office}</span>
+    </div>`).join('');
+  sugDiv.style.display='block';
+}
+
+function selectHomePerson(empId) {
+  const emp = allEmployees.find(e=>e.id===empId);
+  if (!emp) return;
+  selectedHomePerson = emp;
+  document.getElementById('home-name-input').value = emp.name;
+  document.getElementById('home-name-suggestions').style.display='none';
+  const nameKey = emp.name.toLowerCase();
+  const isAdmin = ADMIN_NAMES.includes(nameKey);
+  const isReviewer = REVIEWER_NAMES.includes(nameKey) || allAssignments.some(a=>a.reviewer_id===empId);
+  document.getElementById('home-selected-name').textContent = `👤 ${emp.name} · ${emp.office}`;
+  let buttons = `<div style="display:flex;flex-direction:column;gap:10px">`;
+  buttons += `<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="goEmployeeRoute()">🙋 Fill my performance review form</button>`;
+  if (isReviewer||isAdmin) buttons += `<button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="goReviewerRoute()">📝 Go to reviewer dashboard</button>`;
+  if (isAdmin) buttons += `<button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="showScreen('screen-admin-login')">🔐 Go to admin dashboard</button>`;
+  buttons += `</div>`;
+  document.getElementById('home-role-options').innerHTML = buttons;
+  document.getElementById('home-role-select').style.display='block';
+  document.getElementById('home-no-access').style.display='none';
+}
+
+function goEmployeeRoute() {
+  if (!selectedHomePerson) return;
+  const empRev = allReviews.find(r=>r.employee_id===selectedHomePerson.id&&(!r.reviewer_number||r.reviewer_number===1));
+  if (empRev && empRev.employee_submitted) { toast('You have already submitted your form. Contact admin if changes are needed.',''); return; }
+  pendingEmpId = selectedHomePerson.id;
+  document.getElementById('verify-emp-name').textContent = `Hi, ${selectedHomePerson.name} 👋`;
+  document.getElementById('verify-code-input').value='';
+  document.getElementById('verify-err').style.display='none';
+  showScreen('screen-emp-verify');
+  setTimeout(()=>document.getElementById('verify-code-input').focus(),100);
+}
+
+function goReviewerRoute() {
+  if (!selectedHomePerson) return;
+  const hasAssignments = allAssignments.some(a=>a.reviewer_id===selectedHomePerson.id);
+  const nameKey = selectedHomePerson.name.toLowerCase();
+  const isAdmin = ADMIN_NAMES.includes(nameKey);
+  if (!hasAssignments && !isAdmin) { toast('No reviewer assignments found for you. Contact admin.','error'); return; }
+  document.getElementById('reviewer-login-sub').textContent = `Hi ${selectedHomePerson.name}! Enter your Employee ID and reviewer password.`;
+  document.getElementById('reviewer-code-input').value='';
+  document.getElementById('reviewer-pw-input').value='';
+  document.getElementById('reviewer-err').style.display='none';
+  showScreen('screen-reviewer-login');
+  setTimeout(()=>document.getElementById('reviewer-code-input').focus(),100);
+}
+
+// EMPLOYEE FORM (with ID verification)
+
+async function startEmployeeForm(empId) {
+  const emp = allEmployees.find(e=>e.id===empId);
+  if (!emp) return;
+  const rev = allReviews.find(r=>r.employee_id===empId&&(!r.reviewer_number||r.reviewer_number===1));
+  if (rev && rev.employee_submitted) { toast('This form has already been submitted. Contact HR/admin if changes are needed.',''); return; }
+  pendingEmpId = empId;
+  document.getElementById('verify-emp-name').textContent = `Hi, ${emp.name} 👋`;
+  document.getElementById('verify-code-input').value='';
+  document.getElementById('verify-err').style.display='none';
+  showScreen('screen-emp-verify');
+  setTimeout(()=>document.getElementById('verify-code-input').focus(),100);
+}
+
+function verifyEmpCode() {
+  const empId = pendingEmpId || (selectedHomePerson&&selectedHomePerson.id);
+  const emp = allEmployees.find(e=>e.id===empId);
+  if (!emp) return;
+  const entered = document.getElementById('verify-code-input').value.trim().toUpperCase();
+  const actual = (emp.emp_code||'').trim().toUpperCase();
+  if (!actual) { toast('No Employee ID set for you yet. Please contact HR.','error'); return; }
+  if (entered !== actual) { document.getElementById('verify-err').style.display='block'; return; }
+  document.getElementById('verify-err').style.display='none';
+  currentEmployee = emp;
+  currentReview = allReviews.find(r=>r.employee_id===emp.id&&(!r.reviewer_number||r.reviewer_number===1)) || null;
+  renderEmployeeForm();
+  showScreen('screen-employee-form');
+}
+
+// REVIEWER LOGIN
+async function prepReviewerLogin() { if(!allEmployees.length) await loadAll(); showScreen('screen-reviewer-login'); }
+
+async function checkReviewerLogin() {
+  if (!selectedHomePerson) { toast('Please go back and select your name first.','error'); showScreen('screen-home'); return; }
+  const emp = selectedHomePerson;
+  const code = document.getElementById('reviewer-code-input').value.trim().toUpperCase();
+  const pw = document.getElementById('reviewer-pw-input').value;
+  const errEl = document.getElementById('reviewer-err');
+  if (!APP_SETTINGS.reviewer_password) await loadAll();
+  const codeOk = (emp.emp_code||'').trim().toUpperCase() === code;
+  const pwOk = pw === APP_SETTINGS.reviewer_password;
+  if (!codeOk || !pwOk) { errEl.textContent='Incorrect Employee ID or password.'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+  currentReviewer = emp;
+  isAdminSession = false;
+  renderReviewerDash();
+  showScreen('screen-reviewer-dash');
+}
+
+function renderReviewerDash() {
+  const myAssignments = allAssignments.filter(a=>a.reviewer_id===currentReviewer.id);
+  document.getElementById('reviewer-dash-name').textContent = currentReviewer.name;
+  document.getElementById('reviewer-dash-sub').textContent = `${currentReviewer.office} · ${myAssignments.length} assigned review${myAssignments.length!==1?'s':''}`;
+  const list = document.getElementById('reviewer-assignments-list');
+  if (!myAssignments.length) { list.innerHTML='<p style="font-size:13px;color:var(--gray)">No employees assigned to you yet. Contact admin.</p>'; return; }
+  // Group by employee, show reviewer order
+  const sorted = [...myAssignments].sort((a,b)=>a.reviewer_order-b.reviewer_order);
+  list.innerHTML = '<div class="manage-list">' + sorted.map(a=>{
+    const emp = allEmployees.find(e=>e.id===a.employee_id);
+    if (!emp) return '';
+    const dept = allDepartments.find(d=>d.id===emp.department_id);
+    const empRev = allReviews.find(r=>r.employee_id===emp.id&&(!r.reviewer_number||r.reviewer_number===1));
+    const myReview = allReviews.find(r=>r.employee_id===emp.id&&r.reviewer_id_actual===currentReviewer.id);
+    const empDone = empRev && empRev.employee_submitted;
+    const myDone = myReview && myReview.reviewer_submitted;
+    const orderLabel = a.reviewer_order===1?'Reviewer 1':a.reviewer_order===2?'Reviewer 2':'Reviewer 3';
+    return `<div class="manage-item">
+      <div class="avatar" style="width:34px;height:34px;font-size:12px">${initials(emp.name)}</div>
+      <div class="manage-item-info">
+        <div class="manage-item-name">${emp.name}</div>
+        <div class="manage-item-sub">${emp.office}${dept?' · '+dept.name:''} · <span style="color:var(--blue);font-weight:500">${orderLabel}</span></div>
+      </div>
+      <span class="badge ${myDone?'badge-done':empDone?'badge-pending':'badge-not-started'}">${myDone?'✓ Done':empDone?'Awaiting your review':'Employee pending'}</span>
+      ${empDone?`<button class="btn ${myDone?'btn-secondary':'btn-primary'} btn-sm" onclick="startReviewerForm('${emp.id}',${a.reviewer_order})">${myDone?'Edit review':'Review now'}</button>`:''}
+    </div>`;
+  }).join('') + '</div>';
+}
+
+// REVIEWER FORM - multi-reviewer support
+let currentReviewerOrder = 1;
+async function startReviewerForm(empId, reviewerOrder=1) {
+  if (!isAdminSession) {
+    if (!currentReviewer) { toast('Please log in as a reviewer first.','error'); showScreen('screen-home'); return; }
+    const allowed = allAssignments.some(a=>a.reviewer_id===currentReviewer.id&&a.employee_id===empId);
+    if (!allowed) { toast('You are not assigned to review this employee.','error'); return; }
+  }
+  currentEmployee = allEmployees.find(e=>e.id===empId);
+  // Get employee self-eval (reviewer_number=1 row, employee_submitted=true)
+  const empSelfEval = allReviews.find(r=>r.employee_id===empId&&(!r.reviewer_number||r.reviewer_number===1));
+  if (!empSelfEval || !empSelfEval.employee_submitted) { toast('Employee has not yet submitted their form.',''); return; }
+  // Find or create this reviewer's specific review row
+  const reviewerActualId = isAdminSession ? null : currentReviewer.id;
+  currentReview = allReviews.find(r=>
+    r.employee_id===empId &&
+    r.reviewer_number===reviewerOrder &&
+    (isAdminSession || r.reviewer_id_actual===reviewerActualId)
+  ) || null;
+  currentReviewerOrder = reviewerOrder;
+  selectedNineBox = currentReview ? currentReview.nine_box_rating || null : null;
+  // Pass employee self-eval data for display
+  currentEmployeeSelfEval = empSelfEval;
+  renderReviewerForm();
+  showScreen('screen-employee-form');
+}
+
+let currentEmployeeSelfEval = null;
+
 // INIT
-loadEmployees();
+async function init() { await loadAll(); }
+init();
 </script>
 </body>
 </html>
