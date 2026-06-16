@@ -868,6 +868,58 @@ function clearSig(canvasId) {
   canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
 }
 
+// SIGNATURE TABS
+function switchSigTab(prefix, tab) {
+  const drawArea = document.getElementById(prefix+'-sig-draw-area');
+  const uploadArea = document.getElementById(prefix+'-sig-upload-area');
+  const drawBtn = document.getElementById(prefix+'-sig-tab-draw');
+  const uploadBtn = document.getElementById(prefix+'-sig-tab-upload');
+  if (!drawArea || !uploadArea) return;
+  if (tab === 'draw') {
+    drawArea.style.display = 'block';
+    uploadArea.style.display = 'none';
+    drawBtn.style.background = 'var(--blue)'; drawBtn.style.color = 'white'; drawBtn.style.borderColor = 'var(--blue)';
+    uploadBtn.style.background = 'white'; uploadBtn.style.color = 'var(--gray)'; uploadBtn.style.borderColor = 'var(--border)';
+    setTimeout(()=>initSigPad(prefix+'-sig-canvas'), 30);
+  } else {
+    drawArea.style.display = 'none';
+    uploadArea.style.display = 'block';
+    uploadBtn.style.background = 'var(--blue)'; uploadBtn.style.color = 'white'; uploadBtn.style.borderColor = 'var(--blue)';
+    drawBtn.style.background = 'white'; drawBtn.style.color = 'var(--gray)'; drawBtn.style.borderColor = 'var(--border)';
+  }
+}
+
+function previewSigUpload(prefix) {
+  const fileInput = document.getElementById(prefix+'-sig-file');
+  if (!fileInput || !fileInput.files || !fileInput.files[0]) return;
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const preview = document.getElementById(prefix+'-sig-upload-preview');
+    const img = document.getElementById(prefix+'-sig-upload-img');
+    if (img) img.src = e.target.result;
+    if (preview) preview.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+}
+
+function getSigData(canvasId) {
+  const prefix = canvasId.startsWith('emp') ? 'emp' : 'rev';
+  // Check upload tab first
+  const uploadArea = document.getElementById(prefix+'-sig-upload-area');
+  if (uploadArea && uploadArea.style.display !== 'none') {
+    const img = document.getElementById(prefix+'-sig-upload-img');
+    if (img && img.src && img.src.startsWith('data:')) return img.src;
+    return null;
+  }
+  // Otherwise get canvas drawing
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
+  const ctx = canvas.getContext('2d');
+  const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const hasDrawing = Array.from(pixels).some((v, i) => i % 4 === 3 && v > 0);
+  return hasDrawing ? canvas.toDataURL('image/png') : null;
+}
 
 async function submitEmployeeForm() {
   const errors = [];
