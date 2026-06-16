@@ -1162,21 +1162,6 @@ async function resetAllReviews(empId, empName) {
   } catch(e) { toast('Error: '+e.message,'error'); }
 }
 
-// REVIEWER FORM
-async function startReviewerForm(empId) {
-  // Access control: admins can review anyone; reviewers only their assigned employees
-  if (!isAdminSession) {
-    if (!currentReviewer) { toast('Please log in as a reviewer first.','error'); showScreen('screen-home'); return; }
-    const allowed = allAssignments.some(a=>a.reviewer_id===currentReviewer.id && a.employee_id===empId);
-    if (!allowed) { toast('You are not assigned to review this employee.','error'); return; }
-  }
-  currentEmployee = allEmployees.find(e=>e.id===empId);
-  currentReview = allReviews.find(r=>r.employee_id===empId) || null;
-  if (!currentReview || !currentReview.employee_submitted) { toast('Employee has not yet submitted their form.',''); return; }
-  selectedNineBox = currentReview.nine_box_rating || null;
-  renderReviewerForm();
-  showScreen('screen-employee-form');
-}
 
 function renderReviewerForm() {
   const e = currentEmployee;
