@@ -1931,10 +1931,10 @@ function renderReviewerDash() {
     const emp = allEmployees.find(e=>e.id===a.employee_id);
     if (!emp) return '';
     const dept = allDepartments.find(d=>d.id===emp.department_id);
-    const empRev = allReviews.find(r=>r.employee_id===emp.id&&(!r.reviewer_number||r.reviewer_number===1));
-    const myReview = allReviews.find(r=>r.employee_id===emp.id&&r.reviewer_id_actual===currentReviewer.id);
-    const empDone = empRev && empRev.employee_submitted;
-    const myDone = myReview && myReview.reviewer_submitted;
+    const empRev = allReviews.find(r=>r.employee_id===emp.id && r.employee_submitted===true);
+    const myReview = allReviews.find(r=>r.employee_id===emp.id&&r.reviewer_id_actual===currentReviewer.id&&r.reviewer_submitted===true);
+    const empDone = !!empRev;
+    const myDone = !!myReview;
     const orderLabel = a.reviewer_order===1?'Reviewer 1':a.reviewer_order===2?'Reviewer 2':'Reviewer 3';
     return `<div class="manage-item">
       <div class="avatar" style="width:34px;height:34px;font-size:12px">${initials(emp.name)}</div>
@@ -1951,26 +1951,44 @@ function renderReviewerDash() {
 // REVIEWER FORM - multi-reviewer support
 let currentReviewerOrder = 1;
 async function startReviewerForm(empId, reviewerOrder=1) {
+  // Reload fresh data first
+  await loadAll();
+
   if (!isAdminSession) {
     if (!currentReviewer) { toast('Please log in as a reviewer first.','error'); showScreen('screen-home'); return; }
     const allowed = allAssignments.some(a=>a.reviewer_id===currentReviewer.id&&a.employee_id===empId);
     if (!allowed) { toast('You are not assigned to review this employee.','error'); return; }
   }
+
   currentEmployee = allEmployees.find(e=>e.id===empId);
-  // Get employee self-eval (reviewer_number=1 row, employee_submitted=true)
-  const empSelfEval = allReviews.find(r=>r.employee_id===empId&&(!r.reviewer_number||r.reviewer_number===1));
-  if (!empSelfEval || !empSelfEval.employee_submitted) { toast('Employee has not yet submitted their form.',''); return; }
-  // Find or create this reviewer's specific review row
-  const reviewerActualId = isAdminSession ? null : currentReviewer.id;
+  if (!currentEmployee) { toast('Employee not found.','error'); return; }
+
+  // Find self-eval — the row where employee_submitted = true
+  // Could have reviewer_number null, 0, or 1
+  const empSelfEval = allReviews.find(r=>
+    r.employee_id===empId &&
+    r.employee_submitted === true
+  );
+
+  if (!empSelfEval) {
+    toast('Employee has not yet submitted their self-evaluation form.','');
+    return;
+  }
+
+  // Find existing reviewer row for this reviewer + order
+  const reviewerActualId = isAdminSession ? null : (currentReviewer ? currentReviewer.id : null);
   currentReview = allReviews.find(r=>
     r.employee_id===empId &&
     r.reviewer_number===reviewerOrder &&
+    r.reviewer_submitted === true &&
     (isAdminSession || r.reviewer_id_actual===reviewerActualId)
   ) || null;
+
   currentReviewerOrder = reviewerOrder;
   selectedNineBox = currentReview ? currentReview.nine_box_rating || null : null;
-  // Pass employee self-eval data for display
   currentEmployeeSelfEval = empSelfEval;
+  suggestedNineBox = null;
+
   renderReviewerForm();
   showScreen('screen-employee-form');
 }
